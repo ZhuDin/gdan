@@ -2,9 +2,6 @@
 use bevy::ecs::component::Component;
 
 #[derive(Component)]
-pub struct MapInfo;
-
-#[derive(Component)]
 pub struct MapSize {
     pub x: u32,
     pub y: u32,
