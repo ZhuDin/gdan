@@ -24,19 +24,24 @@ fn main() {
      */
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, (w_game, crate::map::systems::add_map).chain())
+        .insert_resource(crate::map::resources::GreetTimer(Timer::from_seconds(
+            2.0,
+            TimerMode::Repeating,
+        )))
+        .add_systems(
+            Startup,
+            (
+                w_game,
+                crate::map::systems::add_map,
+                crate::map::systems::update_map_name,
+            )
+                .chain(),
+        )
         /*
          * Note that we have used .chain() on the systems.
          * This is because we want them to run in exactly the order they're listed in the code.
          */
-        .add_systems(
-            Update,
-            (
-                crate::map::systems::update_map_name,
-                crate::map::systems::show_map,
-            )
-                .chain(),
-        )
+        .add_systems(Update, (crate::map::systems::show_map,).chain())
         .run();
     /*
      * Controlling data in terms of specific resources or components and
