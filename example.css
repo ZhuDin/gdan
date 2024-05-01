@@ -1,0 +1,59 @@
+body {
+    /* ActiveBorder */
+    color: rgb(89, 102, 115);       
+    color: rgb(89, 102, 115);       /*ActiveTitle*/
+    color: rgb(48, 56, 65);            /*AppWorkspace*/
+    color: rgb(48, 56, 65);         /*Background*/
+    color: rgb(51, 51, 51);       /*ButtonAlternateFace*/
+    /* ButtonDkShadow */
+    color: rgb(92, 153, 214);
+    /* ButtonFace */       
+    color: rgb(48, 56, 65);       
+    color: rgb(89, 102, 115);         /*ButtonHilight*/
+    color: rgb(100, 115, 130);       /*ButtonLight*/
+    color: rgb(95, 180, 180);       /*ButtonShadow*/
+    color: rgb(216, 222, 233);      /*ButtonText*/
+    color: rgb(128, 0, 128);        /*GradientActiveTitle*/
+    color: rgb(0, 128, 0);          /*GradientInactiveTitle*/
+    /* GrayText */
+    color: rgb(216, 222, 233);       
+    /* Hilight */
+    color: rgb(89, 102, 115);      
+    color: rgb(216, 222, 233);      /*HilightText*/
+    color: rgb(95, 180, 180);       /*HotTrackingColor 链接边框*/
+    color: rgb(48, 56, 65);         /*InactiveBorder*/
+    color: rgb(48, 56, 65);      /*InactiveTitle*/
+    /* InactiveTitleText */
+    color: rgb(216, 222, 233);
+    color: rgb(196, 202, 213);      /*InfoText*/
+    color: rgb(48, 56, 65);            /*InfoWindow*/
+    color: rgb(0, 0, 0);            /*Menu*/
+    color: rgb(0, 0, 0);            /*MenuBar*/
+    color: rgb(128, 0, 128);        /*MenuHilight*/
+    color: rgb(196, 202, 213);      /*MenuText*/
+    color: rgb(89, 102, 115);            /*Scrollbar*/
+    color: rgb(0, 0, 0);      /*TitleText*/
+    color: rgb(48, 56, 65);         /*Window*/
+    color: rgb(89, 102, 115);       /*WindowFrame*/
+    /* WindowText */
+    color: rgb(216, 222, 233);
+
+    /* choice */
+    color: rgb(153, 199, 148);      /*green*/
+    color: rgb(51, 51, 51);         /*grey*/
+    color: rgb(198, 149, 198);      /*pink*/
+    color: rgb(102, 153, 204);      /*blue*/
+    color: rgb(92, 153, 214);       /*blue-vibrant*/
+    color: rgb(89, 102, 115);       /*blue-2*/
+    color: rgb(48, 56, 65);         /*blue-3*/
+    color: rgb(100, 115, 130);      /*blue-4*/
+    color: rgb(95, 180, 180);       /*blue-5*/
+    color: rgb(166, 172, 185);      /*blue-6*/
+    color: rgb(249, 174, 88);       /*orange*/
+    color: rgb(238, 147, 43);       /*orange-2*/
+    color: rgb(250, 199, 97);       /*orange-3*/
+    color: rgb(236, 95, 102);       /*red*/
+    color: rgb(249, 123, 88);       /*red-2*/
+    color: rgb(247, 247, 247);      /*white-2*/
+    color: rgb(216, 222, 233);      /*white-3*/
+}
