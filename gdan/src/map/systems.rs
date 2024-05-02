@@ -3,6 +3,13 @@ use bevy::ecs::query::*;
 use bevy::ecs::system::*;
 use bevy::log::info;
 
+/*
+ * accessing resources using Res/ResMut
+ * accessing components of entities using queries (Query)
+ * creating/destroying entities, components, and resources using Commands (Commands)
+ * sending/receiving events using EventWriter/EventReader
+ */
+
 pub fn add_map(mut commands: Commands) {
     info!("add_map");
     commands.spawn((
