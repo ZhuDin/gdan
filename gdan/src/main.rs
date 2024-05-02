@@ -6,6 +6,18 @@ pub mod scene;
 
 use bevy::app::*;
 use bevy::prelude::*;
+use bevy::winit::*;
+
+#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+enum MyAppState {
+    #[default]
+    Main,
+    LoadingMap,
+    // LoadingOper,
+    // LoadingRule,
+    // LoadingGame,
+    // LoadingScene,
+}
 
 /*
  * All app logic in Bevy uses the Entity Component System paradigm, which is often shortened to ECS.
@@ -25,14 +37,21 @@ fn main() {
      */
     App::new()
         .add_plugins(DefaultPlugins)
+        // Only run the app when there is user input. This will significantly reduce CPU/GPU use.
+        .insert_resource(WinitSettings::desktop_app())
         .insert_resource(crate::map::resources::GreetTimer(Timer::from_seconds(
-            2.0,
+            5.0,
             TimerMode::Repeating,
         )))
+        // Register the state type(s) in the app builder
+        // Specify the initial value:
+        // .insert_state(MyAppState::Main)
+        // Or use the default (if the type impls Default):
+        .init_state::<MyAppState>()
         .add_systems(
             Startup,
             (
-                w_game,
+                w_game_setup,
                 crate::map::systems::add_map,
                 crate::map::systems::update_map_name,
             )
@@ -44,7 +63,12 @@ fn main() {
          */
         .add_systems(
             Update,
-            (crate::map::systems::show_map, bevy::window::close_on_esc).chain(),
+            (
+                w_game_system,
+                crate::map::systems::show_map,
+                bevy::window::close_on_esc,
+            )
+                .chain(),
         )
         .run();
     /*
@@ -53,8 +77,103 @@ fn main() {
      */
 }
 
-fn w_game() {
+fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("w_game");
+
+    commands.spawn(Camera2dBundle::default());
+
+    commands.spawn(TextBundle::from_section(
+        "w_game",
+        TextStyle {
+            font: asset_server.load("fonts/FiraMono-Medium.ttf"),
+            font_size: 18.,
+            color: Color::WHITE,
+        },
+    ));
+
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent
+                .spawn(ButtonBundle {
+                    style: Style {
+                        width: Val::Px(150.0),
+                        height: Val::Px(65.0),
+                        border: UiRect::all(Val::Px(5.0)),
+                        // horizontally center child text
+                        justify_content: JustifyContent::Center,
+                        // vertically center child text
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    border_color: BorderColor(Color::BLACK),
+                    background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Map",
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 40.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                        },
+                    ));
+                });
+        });
+}
+
+fn w_game_system(
+    mut interaction_query: Query<
+        (
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &Children,
+        ),
+        (Changed<Interaction>, With<Button>),
+    >,
+    state: Res<State<MyAppState>>,
+    mut next_state: ResMut<NextState<MyAppState>>,
+    mut text_query: Query<&mut Text>,
+) {
+    for (interaction, mut color, mut border_color, children) in &mut interaction_query {
+        let mut text = text_query.get_mut(children[0]).unwrap();
+        match *interaction {
+            Interaction::Pressed => {
+                text.sections[0].value = "Press".to_string();
+                *color = Color::rgb(0.35, 0.75, 0.35).into();
+                border_color.0 = Color::RED;
+
+                match state.get() {
+                    MyAppState::Main => {
+                        next_state.set(MyAppState::LoadingMap);
+                        info!("MyAppState::LoadingMap");
+                    }
+                    _ => (),
+                }
+            }
+            Interaction::Hovered => {
+                text.sections[0].value = "Hover".to_string();
+                *color = Color::rgb(0.25, 0.25, 0.25).into();
+                border_color.0 = Color::WHITE;
+            }
+            Interaction::None => {
+                text.sections[0].value = "Button".to_string();
+                *color = Color::rgb(0.15, 0.15, 0.15).into();
+                border_color.0 = Color::BLACK;
+            }
+        }
+    }
 }
 
 // fn exit_system(mut exit: EventWriter<AppExit>, keyboard_input: Res<ButtonInput<KeyCode>>) {
