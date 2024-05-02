@@ -4,6 +4,7 @@ pub mod oper;
 pub mod rule;
 pub mod scene;
 
+use bevy::app::*;
 use bevy::prelude::*;
 
 /*
@@ -41,7 +42,10 @@ fn main() {
          * Note that we have used .chain() on the systems.
          * This is because we want them to run in exactly the order they're listed in the code.
          */
-        .add_systems(Update, (crate::map::systems::show_map,).chain())
+        .add_systems(
+            Update,
+            (crate::map::systems::show_map, bevy::window::close_on_esc).chain(),
+        )
         .run();
     /*
      * Controlling data in terms of specific resources or components and
@@ -52,3 +56,9 @@ fn main() {
 fn w_game() {
     info!("w_game");
 }
+
+// fn exit_system(mut exit: EventWriter<AppExit>, keyboard_input: Res<ButtonInput<KeyCode>>) {
+//     if keyboard_input.just_released(KeyCode::Escape) {
+//         exit.send(AppExit);
+//     }
+// }
