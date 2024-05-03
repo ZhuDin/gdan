@@ -6,7 +6,6 @@ pub mod scene;
 
 use bevy::app::*;
 use bevy::prelude::*;
-use bevy::winit::*;
 
 #[derive(Component)]
 pub struct MainInfo;
@@ -40,8 +39,6 @@ fn main() {
      */
     App::new()
         .add_plugins(DefaultPlugins)
-        // Only run the app when there is user input. This will significantly reduce CPU/GPU use.
-        .insert_resource(WinitSettings::desktop_app())
         .insert_resource(crate::map::resources::GreetTimer(Timer::from_seconds(
             5.0,
             TimerMode::Repeating,
@@ -75,9 +72,16 @@ fn main() {
         )
         .add_systems(
             Update,
-            (crate::map::systems::show_map,)
+            (
+                crate::map::systems::show_map,
+                crate::map::systems::map_scale,
+            )
                 .chain()
                 .run_if(in_state(MyAppState::MapMenu)),
+        )
+        .add_systems(
+            OnExit(MyAppState::MapMenu),
+            (crate::map::systems::despawn_map_menu,),
         )
         .run();
     /*
@@ -87,7 +91,7 @@ fn main() {
 }
 
 fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    info!("w_game");
+    info!("w_game_setup");
 
     commands.spawn((Camera2dBundle::default(), MainInfo));
 
@@ -119,29 +123,35 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .with_children(|parent| {
             parent
-                .spawn(ButtonBundle {
-                    style: Style {
-                        width: Val::Px(150.0),
-                        height: Val::Px(65.0),
-                        border: UiRect::all(Val::Px(5.0)),
-                        // horizontally center child text
-                        justify_content: JustifyContent::Center,
-                        // vertically center child text
-                        align_items: AlignItems::Center,
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(150.0),
+                            height: Val::Px(65.0),
+                            border: UiRect::all(Val::Px(5.0)),
+                            // horizontally center child text
+                            justify_content: JustifyContent::Center,
+                            // vertically center child text
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        border_color: BorderColor(Color::BLACK),
+                        background_color: Color::rgb(0.15, 0.15, 0.15).into(),
                         ..default()
                     },
-                    border_color: BorderColor(Color::BLACK),
-                    background_color: Color::rgb(0.15, 0.15, 0.15).into(),
-                    ..default()
-                })
+                    MainInfo,
+                ))
                 .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Map",
-                        TextStyle {
-                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                            font_size: 40.0,
-                            color: Color::rgb(0.9, 0.9, 0.9),
-                        },
+                    parent.spawn((
+                        TextBundle::from_section(
+                            "Map",
+                            TextStyle {
+                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                font_size: 40.0,
+                                color: Color::rgb(0.9, 0.9, 0.9),
+                            },
+                        ),
+                        MainInfo,
                     ));
                 });
         });

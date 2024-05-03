@@ -36,3 +36,6 @@ use bevy::ecs::component::Component;
 
 #[derive(Component)]
 pub struct MapInfo;
+
+#[derive(Component)]
+pub struct MapNC;
