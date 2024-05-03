@@ -13,14 +13,14 @@ use bevy::log::info;
 pub fn add_map(mut commands: Commands) {
     info!("add_map");
     commands.spawn((
-        crate::map::entities::MapInfo,
         crate::map::components::MapName("NC".to_string()),
         crate::map::components::MapSize { x: 1, y: 1, z: 1 },
+        crate::map::entities::MapInfo,
     ));
     commands.spawn((
-        crate::map::entities::MapInfo,
         crate::map::components::MapName("XinZhu".to_string()),
         crate::map::components::MapSize { x: 1, y: 1, z: 1 },
+        crate::map::entities::MapInfo,
     ));
 }
 

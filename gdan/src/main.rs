@@ -8,15 +8,18 @@ use bevy::app::*;
 use bevy::prelude::*;
 use bevy::winit::*;
 
+#[derive(Component)]
+pub struct MainInfo;
+
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 enum MyAppState {
     #[default]
-    Main,
-    LoadingMap,
-    // LoadingOper,
-    // LoadingRule,
-    // LoadingGame,
-    // LoadingScene,
+    MainMenu,
+    MapMenu,
+    // OperMenu,
+    // RuleMenu,
+    // SceneMenu,
+    // GameMenu,
 }
 
 /*
@@ -48,27 +51,33 @@ fn main() {
         // .insert_state(MyAppState::Main)
         // Or use the default (if the type impls Default):
         .init_state::<MyAppState>()
-        .add_systems(
-            Startup,
-            (
-                w_game_setup,
-                crate::map::systems::add_map,
-                crate::map::systems::update_map_name,
-            )
-                .chain(),
-        )
+        // .add_systems(Startup, (w_game_setup,).chain())
+        .add_systems(Update, bevy::window::close_on_esc)
         /*
+         * MainMenu
          * Note that we have used .chain() on the systems.
          * This is because we want them to run in exactly the order they're listed in the code.
          */
+        .add_systems(OnEnter(MyAppState::MainMenu), (w_game_setup,).chain())
         .add_systems(
             Update,
-            (
-                w_game_system,
-                crate::map::systems::show_map,
-                bevy::window::close_on_esc,
-            )
-                .chain(),
+            (w_game_system,)
+                .chain()
+                .run_if(in_state(MyAppState::MainMenu)),
+        )
+        .add_systems(OnExit(MyAppState::MainMenu), (despawn_main_menu,))
+        /*
+         * MapMenu
+         */
+        .add_systems(
+            OnEnter(MyAppState::MapMenu),
+            (crate::map::systems::add_map,).chain(),
+        )
+        .add_systems(
+            Update,
+            (crate::map::systems::show_map,)
+                .chain()
+                .run_if(in_state(MyAppState::MapMenu)),
         )
         .run();
     /*
@@ -80,28 +89,34 @@ fn main() {
 fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("w_game");
 
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn((Camera2dBundle::default(), MainInfo));
 
-    commands.spawn(TextBundle::from_section(
-        "w_game",
-        TextStyle {
-            font: asset_server.load("fonts/FiraMono-Medium.ttf"),
-            font_size: 18.,
-            color: Color::WHITE,
-        },
+    commands.spawn((
+        TextBundle::from_section(
+            "w_game",
+            TextStyle {
+                font: asset_server.load("fonts/FiraMono-Medium.ttf"),
+                font_size: 18.,
+                color: Color::WHITE,
+            },
+        ),
+        MainInfo,
     ));
 
     commands
-        .spawn(NodeBundle {
-            style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        })
+            MainInfo,
+        ))
         .with_children(|parent| {
             parent
                 .spawn(ButtonBundle {
@@ -138,41 +153,51 @@ fn w_game_system(
             &Interaction,
             &mut BackgroundColor,
             &mut BorderColor,
-            &Children,
+            // &Children,
         ),
         (Changed<Interaction>, With<Button>),
     >,
     state: Res<State<MyAppState>>,
     mut next_state: ResMut<NextState<MyAppState>>,
-    mut text_query: Query<&mut Text>,
+    // mut text_query: Query<&mut Text>,
 ) {
-    for (interaction, mut color, mut border_color, children) in &mut interaction_query {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+    for (interaction, mut color, mut border_color /*, children*/) in &mut interaction_query {
+        // let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
-                text.sections[0].value = "Press".to_string();
+                // text.sections[0].value = "Press".to_string();
                 *color = Color::rgb(0.35, 0.75, 0.35).into();
                 border_color.0 = Color::RED;
 
                 match state.get() {
-                    MyAppState::Main => {
-                        next_state.set(MyAppState::LoadingMap);
-                        info!("MyAppState::LoadingMap");
+                    MyAppState::MainMenu => {
+                        next_state.set(MyAppState::MapMenu);
+                        info!("w_game_system -> MyAppState::LoadingMap");
                     }
                     _ => (),
                 }
             }
             Interaction::Hovered => {
-                text.sections[0].value = "Hover".to_string();
+                // text.sections[0].value = "Hover".to_string();
                 *color = Color::rgb(0.25, 0.25, 0.25).into();
                 border_color.0 = Color::WHITE;
             }
             Interaction::None => {
-                text.sections[0].value = "Button".to_string();
+                // text.sections[0].value = "Button".to_string();
                 *color = Color::rgb(0.15, 0.15, 0.15).into();
                 border_color.0 = Color::BLACK;
             }
         }
+    }
+}
+
+// You can remove components on existing entities, using Commands or exclusive World access.
+fn despawn_main_menu(query_enemy: Query<Entity, With<MainInfo>>, mut commands: Commands) {
+    info!("despawn_main_menu");
+    for entity_id in query_enemy.iter() {
+        // commands.entity(entity_id).remove::<MainInfo>();
+        commands.entity(entity_id).despawn();
+        // .insert(Friendly);
     }
 }
 
