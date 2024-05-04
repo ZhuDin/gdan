@@ -91,7 +91,11 @@ fn main() {
          */
         .add_systems(
             OnEnter(MyAppState::OperMenu),
-            (crate::oper::systems::camera2dbundle,).chain(),
+            (
+                crate::oper::systems::camera2dbundle,
+                crate::oper::systems::oper_setup,
+            )
+                .chain(),
         )
         .add_systems(
             Update,

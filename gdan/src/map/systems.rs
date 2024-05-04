@@ -18,6 +18,7 @@ pub fn camera2dbundle(mut commands: Commands) {
 }
 
 pub fn map_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+    info!("map_menu");
     commands.spawn((
         TextBundle::from_section(
             "show map",
