@@ -76,6 +76,7 @@ fn main() {
             (
                 crate::map::systems::camera2dbundle,
                 crate::map::systems::map_menu,
+                crate::map::systems::init_map,
                 crate::map::systems::add_map,
             )
                 .chain(),

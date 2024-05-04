@@ -14,4 +14,8 @@ pub struct GreetTimer(pub Timer);
 #[derive(Resource)]
 pub struct MapInfo {
     pub scale: f32,
+    pub unit_x: f32,
+    pub unit_y: f32,
+    pub label_x: u32,
+    pub label_y: u32,
 }

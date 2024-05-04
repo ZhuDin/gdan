@@ -33,43 +33,59 @@ pub fn map_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-pub fn add_map(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn init_map(mut commands: Commands) {
+    info!("init_map");
+    commands.insert_resource(crate::map::resources::MapInfo {
+        scale: 0.5,
+        unit_x: 1440.,
+        unit_y: 810.,
+        label_x: 3,
+        label_y: 4,
+    });
+}
+
+pub fn add_map(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    map_info: Res<crate::map::resources::MapInfo>,
+) {
     info!("add_map");
 
-    commands.spawn((
-        crate::map::components::MapName("NC".to_string()),
-        crate::map::components::MapSize { x: 1, y: 1, z: 1 },
-        crate::map::entities::MapMenu,
-    ));
-    commands.spawn((
-        crate::map::components::MapName("XinZhu".to_string()),
-        crate::map::components::MapSize { x: 1, y: 1, z: 1 },
-        crate::map::entities::MapMenu,
-    ));
-
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("wg/ncly/level21/1-1.png"),
-            transform: Transform::from_xyz(0., 0., 0.),
-            ..default()
-        },
-        crate::map::entities::MapNC,
-        crate::map::entities::MapMenu,
-    ));
-
-    commands.insert_resource(crate::map::resources::MapInfo { scale: 0.5 });
+    for x in 0..map_info.label_x {
+        for y in 0..map_info.label_y {
+            commands.spawn((
+                SpriteBundle {
+                    texture: asset_server.load(
+                        "wg/ncly/level21/".to_string()
+                            + (x + 1).to_string().as_str()
+                            + "-"
+                            + (y + 1).to_string().as_str()
+                            + ".png",
+                    ),
+                    transform: Transform::from_xyz(
+                        x as f32 * map_info.unit_x,
+                        y as f32 * map_info.unit_y,
+                        0.,
+                    ),
+                    ..default()
+                },
+                crate::map::entities::MapNC,
+                crate::map::entities::MapMenu,
+            ));
+        }
+    }
 }
 
 pub fn map_scale(
     mut scroll_evr: EventReader<MouseWheel>,
     mut map_info: ResMut<crate::map::resources::MapInfo>,
-    mut query: Query<
-        &mut Transform,
-        (
-            With<crate::map::entities::MapMenu>,
-            With<crate::map::entities::MapNC>,
-        ),
-    >,
+    // mut query: Query<
+    //     &mut Transform,
+    //     (
+    //         With<crate::map::entities::MapMenu>,
+    //         With<crate::map::entities::MapNC>,
+    //     ),
+    // >,
 ) {
     for ev in scroll_evr.read() {
         match ev.unit {
@@ -95,13 +111,12 @@ pub fn map_scale(
     }
     // Consider changing font-size instead of scaling the transform. Scaling a Text2D will scale the
     // rendered quad, resulting in a pixellated look.
-    for mut transform in &mut query {
-        // transform.translation = Vec3::new(400.0, 0.0, 0.0);
-
-        let scale = map_info.scale;
-        transform.scale.x = scale;
-        transform.scale.y = scale;
-    }
+    // for mut transform in &mut query {
+    // transform.translation = Vec3::new(400.0, 0.0, 0.0);
+    // let scale = map_info.scale;
+    //     transform.scale.x = scale;
+    //     transform.scale.y = scale;
+    // }
 }
 
 pub fn despawn_map_menu(
