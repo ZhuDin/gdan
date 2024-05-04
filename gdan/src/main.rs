@@ -16,7 +16,7 @@ enum MyAppState {
     MainMenu,
     MapMenu,
     // OperMenu,
-    // RuleMenu,
+    RuleMenu,
     // SceneMenu,
     // GameMenu,
 }
@@ -48,6 +48,7 @@ fn main() {
         // .insert_state(MyAppState::Main)
         // Or use the default (if the type impls Default):
         .init_state::<MyAppState>()
+        .init_gizmo_group::<crate::rule::entities::MyRoundGizmos>()
         // .add_systems(Startup, (w_game_setup,).chain())
         .add_systems(Update, bevy::window::close_on_esc)
         /*
@@ -68,20 +69,39 @@ fn main() {
          */
         .add_systems(
             OnEnter(MyAppState::MapMenu),
-            (crate::map::systems::add_map,).chain(),
+            (
+                crate::map::systems::camera2dbundle,
+                crate::map::systems::map_menu,
+                crate::map::systems::add_map,
+            )
+                .chain(),
         )
         .add_systems(
             Update,
-            (
-                crate::map::systems::show_map,
-                crate::map::systems::map_scale,
-            )
+            (crate::map::systems::map_scale,)
                 .chain()
                 .run_if(in_state(MyAppState::MapMenu)),
         )
         .add_systems(
             OnExit(MyAppState::MapMenu),
             (crate::map::systems::despawn_map_menu,),
+        )
+        /*
+         * RuleMenu
+         */
+        .add_systems(
+            OnEnter(MyAppState::RuleMenu),
+            (crate::rule::systems::camera2dbundle,).chain(),
+        )
+        .add_systems(
+            Update,
+            (crate::rule::systems::draw_rule,)
+                .chain()
+                .run_if(in_state(MyAppState::RuleMenu)),
+        )
+        .add_systems(
+            OnExit(MyAppState::RuleMenu),
+            (crate::rule::systems::despawn_rule_menu,),
         )
         .run();
     /*
@@ -122,6 +142,9 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             MainInfo,
         ))
         .with_children(|parent| {
+            /*
+             * map button
+             */
             parent
                 .spawn((
                     ButtonBundle {
@@ -154,6 +177,42 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         MainInfo,
                     ));
                 });
+
+            /*
+             * rule button
+             */
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(150.0),
+                            height: Val::Px(65.0),
+                            border: UiRect::all(Val::Px(5.0)),
+                            // horizontally center child text
+                            justify_content: JustifyContent::Center,
+                            // vertically center child text
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        border_color: BorderColor(Color::BLACK),
+                        background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                        ..default()
+                    },
+                    MainInfo,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        TextBundle::from_section(
+                            "Rule",
+                            TextStyle {
+                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                font_size: 40.0,
+                                color: Color::rgb(0.9, 0.9, 0.9),
+                            },
+                        ),
+                        MainInfo,
+                    ));
+                });
         });
 }
 
@@ -163,26 +222,31 @@ fn w_game_system(
             &Interaction,
             &mut BackgroundColor,
             &mut BorderColor,
-            // &Children,
+            &Children,
         ),
         (Changed<Interaction>, With<Button>),
     >,
     state: Res<State<MyAppState>>,
     mut next_state: ResMut<NextState<MyAppState>>,
-    // mut text_query: Query<&mut Text>,
+    mut text_query: Query<&mut Text>,
 ) {
-    for (interaction, mut color, mut border_color /*, children*/) in &mut interaction_query {
-        // let mut text = text_query.get_mut(children[0]).unwrap();
+    for (interaction, mut color, mut border_color, children) in &mut interaction_query {
+        let text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
-                // text.sections[0].value = "Press".to_string();
                 *color = Color::rgb(0.35, 0.75, 0.35).into();
                 border_color.0 = Color::RED;
 
                 match state.get() {
                     MyAppState::MainMenu => {
-                        next_state.set(MyAppState::MapMenu);
-                        info!("w_game_system -> MyAppState::LoadingMap");
+                        if text.sections[0].value == "Map".to_string() {
+                            next_state.set(MyAppState::MapMenu);
+                            info!("w_game_system -> MyAppState::MapMenu");
+                        }
+                        if text.sections[0].value == "Rule".to_string() {
+                            next_state.set(MyAppState::RuleMenu);
+                            info!("w_game_system -> MyAppState::RuleMenu");
+                        }
                     }
                     _ => (),
                 }

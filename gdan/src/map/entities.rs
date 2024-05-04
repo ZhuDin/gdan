@@ -35,7 +35,10 @@ use bevy::ecs::component::Component;
  */
 
 #[derive(Component)]
-pub struct MapInfo;
+pub struct MapMenu;
 
 #[derive(Component)]
 pub struct MapNC;
+
+#[derive(Component)]
+pub struct MapHexagon;

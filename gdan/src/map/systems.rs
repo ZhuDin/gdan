@@ -2,7 +2,7 @@
 
 use bevy::ecs::query::*;
 use bevy::ecs::system::*;
-use bevy::log::info;
+use bevy::log::*;
 use bevy::prelude::*;
 
 /*
@@ -12,19 +12,34 @@ use bevy::prelude::*;
  * sending/receiving events using EventWriter/EventReader
  */
 
+pub fn camera2dbundle(mut commands: Commands) {
+    info!("camera2dbundle");
+    commands.spawn((Camera2dBundle::default(), crate::map::entities::MapMenu));
+}
+
+pub fn map_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(TextBundle::from_section(
+        "show map",
+        TextStyle {
+            font: asset_server.load("fonts/FiraMono-Medium.ttf"),
+            font_size: 24.,
+            color: Color::WHITE,
+        },
+    ));
+}
+
 pub fn add_map(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("add_map");
-    commands.spawn((Camera2dBundle::default(), crate::map::entities::MapInfo));
 
     commands.spawn((
         crate::map::components::MapName("NC".to_string()),
         crate::map::components::MapSize { x: 1, y: 1, z: 1 },
-        crate::map::entities::MapInfo,
+        crate::map::entities::MapMenu,
     ));
     commands.spawn((
         crate::map::components::MapName("XinZhu".to_string()),
         crate::map::components::MapSize { x: 1, y: 1, z: 1 },
-        crate::map::entities::MapInfo,
+        crate::map::entities::MapMenu,
     ));
 
     commands.spawn((
@@ -34,7 +49,7 @@ pub fn add_map(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         crate::map::entities::MapNC,
-        crate::map::entities::MapInfo,
+        crate::map::entities::MapMenu,
     ));
 }
 
@@ -42,7 +57,7 @@ pub fn map_scale(
     mut query: Query<
         &mut Transform,
         (
-            With<crate::map::entities::MapInfo>,
+            With<crate::map::entities::MapMenu>,
             With<crate::map::entities::MapNC>,
         ),
     >,
@@ -67,22 +82,8 @@ pub fn map_scale(
 //     }
 // }
 
-pub fn show_map(
-    time: Res<bevy::time::Time>,
-    mut timer: ResMut<crate::map::resources::GreetTimer>,
-    query: Query<&crate::map::components::MapName, With<crate::map::entities::MapInfo>>,
-) {
-    // update our timer with the time elapsed since the last update
-    // if that caused the timer to finish, we say hello to everyone
-    if timer.0.tick(time.delta()).just_finished() {
-        for name in &query {
-            println!("hello {}!", name.0);
-        }
-    }
-}
-
 pub fn despawn_map_menu(
-    query_enemy: Query<Entity, With<crate::map::entities::MapInfo>>,
+    query_enemy: Query<Entity, With<crate::map::entities::MapMenu>>,
     mut commands: Commands,
 ) {
     info!("despawn_main_menu");
