@@ -8,7 +8,7 @@ use bevy::app::*;
 use bevy::prelude::*;
 
 #[derive(Component)]
-pub struct MainInfo;
+pub struct MainMenu;
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MyAppState {
@@ -49,14 +49,17 @@ fn main() {
         // Or use the default (if the type impls Default):
         .init_state::<MyAppState>()
         .init_gizmo_group::<crate::rule::entities::MyRoundGizmos>()
-        // .add_systems(Startup, (w_game_setup,).chain())
+        // .add_systems(Startup, ().chain())
         .add_systems(Update, close_on_esc)
         /*
          * MainMenu
          * Note that we have used .chain() on the systems.
          * This is because we want them to run in exactly the order they're listed in the code.
          */
-        .add_systems(OnEnter(MyAppState::MainMenu), (w_game_setup,).chain())
+        .add_systems(
+            OnEnter(MyAppState::MainMenu),
+            (camera2dbundle, tips_info, w_game_setup).chain(),
+        )
         .add_systems(
             Update,
             (w_game_system,)
@@ -135,22 +138,13 @@ fn main() {
      */
 }
 
+pub fn camera2dbundle(mut commands: Commands) {
+    info!("camera2dbundle");
+    commands.spawn((Camera2dBundle::default(), MainMenu));
+}
+
 fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("w_game_setup");
-
-    commands.spawn((Camera2dBundle::default(), MainInfo));
-
-    commands.spawn((
-        TextBundle::from_section(
-            "w_game",
-            TextStyle {
-                font: asset_server.load("fonts/FiraMono-Medium.ttf"),
-                font_size: 18.,
-                color: Color::WHITE,
-            },
-        ),
-        MainInfo,
-    ));
 
     commands
         .spawn((
@@ -164,7 +158,7 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ..default()
             },
-            MainInfo,
+            MainMenu,
         ))
         .with_children(|parent| {
             /*
@@ -187,7 +181,7 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         background_color: Color::rgb(0.15, 0.15, 0.15).into(),
                         ..default()
                     },
-                    MainInfo,
+                    MainMenu,
                 ))
                 .with_children(|parent| {
                     parent.spawn((
@@ -199,7 +193,7 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 color: Color::rgb(0.9, 0.9, 0.9),
                             },
                         ),
-                        MainInfo,
+                        MainMenu,
                     ));
                 });
 
@@ -223,7 +217,7 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         background_color: Color::rgb(0.15, 0.15, 0.15).into(),
                         ..default()
                     },
-                    MainInfo,
+                    MainMenu,
                 ))
                 .with_children(|parent| {
                     parent.spawn((
@@ -235,7 +229,7 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 color: Color::rgb(0.9, 0.9, 0.9),
                             },
                         ),
-                        MainInfo,
+                        MainMenu,
                     ));
                 });
 
@@ -259,7 +253,7 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         background_color: Color::rgb(0.15, 0.15, 0.15).into(),
                         ..default()
                     },
-                    MainInfo,
+                    MainMenu,
                 ))
                 .with_children(|parent| {
                     parent.spawn((
@@ -271,7 +265,7 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 color: Color::rgb(0.9, 0.9, 0.9),
                             },
                         ),
-                        MainInfo,
+                        MainMenu,
                     ));
                 });
         });
@@ -344,20 +338,19 @@ pub fn tips_info(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("tips_info");
     commands.spawn((
         TextBundle::from_section(
-            "press Esc to Closing window \n
-                press B back to Main Menu",
+            " press 'Esc' to Closing window\n press 'B' back to Main Menu",
             TextStyle {
                 font: asset_server.load("fonts/FiraMono-Medium.ttf"),
                 font_size: 24.,
                 color: Color::WHITE,
             },
         ),
-        crate::map::entities::MapMenu,
+        MainMenu,
     ));
 }
 
 // You can remove components on existing entities, using Commands or exclusive World access.
-fn despawn_main_menu(query_enemy: Query<Entity, With<MainInfo>>, mut commands: Commands) {
+fn despawn_main_menu(query_enemy: Query<Entity, With<MainMenu>>, mut commands: Commands) {
     info!("despawn_main_menu");
     for entity_id in query_enemy.iter() {
         // commands.entity(entity_id).remove::<MainInfo>();
