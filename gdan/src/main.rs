@@ -48,6 +48,7 @@ fn main() {
         // .insert_state(MyAppState::Main)
         // Or use the default (if the type impls Default):
         .init_state::<MyAppState>()
+        .init_state::<crate::game::entities::GameState>()
         .init_gizmo_group::<crate::rule::entities::MyRoundGizmos>()
         // .add_systems(Startup, ().chain())
         .add_systems(Update, close_on_esc)
@@ -136,11 +137,33 @@ fn main() {
          */
         .add_systems(
             OnEnter(MyAppState::GameMenu),
-            (crate::game::systems::camera2dbundle,).chain(),
+            (
+                crate::game::systems::camera2dbundle,
+                crate::game::systems::game_setup,
+            )
+                .chain(),
         )
         .add_systems(
             Update,
-            (back_main_menu,)
+            (
+                back_main_menu,
+                crate::game::systems::update_text,
+                crate::game::systems::spin,
+                crate::game::systems::update_volumes,
+                crate::game::systems::update_test_state,
+                crate::game::systems::render_oper,
+                crate::game::systems::aabb_intersection_system
+                    .run_if(in_state(crate::game::entities::GameState::AabbSweep)),
+                crate::game::systems::circle_intersection_system
+                    .run_if(in_state(crate::game::entities::GameState::CircleSweep)),
+                crate::game::systems::ray_cast_system
+                    .run_if(in_state(crate::game::entities::GameState::RayCast)),
+                crate::game::systems::aabb_cast_system
+                    .run_if(in_state(crate::game::entities::GameState::AabbCast)),
+                crate::game::systems::bounding_circle_cast_system
+                    .run_if(in_state(crate::game::entities::GameState::CircleCast)),
+                crate::game::systems::render_volumes,
+            )
                 .chain()
                 .run_if(in_state(MyAppState::GameMenu)),
         )
