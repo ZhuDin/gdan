@@ -13,9 +13,32 @@ use bevy::prelude::*;
  * sending/receiving events using EventWriter/EventReader
  */
 
-pub fn camera2dbundle(mut commands: Commands) {
+pub fn camera2dbundle(mut commands: Commands, map_info: Res<crate::map::resources::MapInfo>) {
     info!("camera2dbundle");
-    commands.spawn((Camera2dBundle::default(), crate::map::entities::MapMenu));
+    commands.spawn((
+        Camera2dBundle {
+            transform: Transform::from_xyz(
+                (map_info.label_x as f32 * map_info.unit_x) / 2. - map_info.unit_x / 2.,
+                (map_info.label_y as f32 * map_info.unit_y) / 2. - map_info.unit_y / 2.,
+                0.0,
+            ),
+            projection: OrthographicProjection {
+                /*
+                 * The projection contains the near and far values,
+                 * which indicate the minimum and maximum Z coordinate (depth) that can be rendered,
+                 * relative to the position (transform) of the camera.
+                 * don't forget to set `near` and `far`
+                 */
+                near: -1000.0,
+                far: 1000.0,
+                scale: 5.,
+
+                ..default()
+            },
+            ..default()
+        },
+        crate::map::entities::MapMenu,
+    ));
 }
 
 pub fn map_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -41,6 +64,10 @@ pub fn init_map(mut commands: Commands) {
         unit_y: 810.,
         label_x: 3,
         label_y: 4,
+        // level 20: 10.meter/72.pixel
+        // level 21: 5.meter/72.pixel
+        satellite_map_level: 20,
+        meter_per_pixel: 10. / 72.,
     });
 }
 

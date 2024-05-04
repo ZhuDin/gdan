@@ -18,4 +18,6 @@ pub struct MapInfo {
     pub unit_y: f32,
     pub label_x: u32,
     pub label_y: u32,
+    pub satellite_map_level: u8,
+    pub meter_per_pixel: f32,
 }
