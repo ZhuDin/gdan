@@ -18,7 +18,7 @@ pub enum MyAppState {
     OperMenu,
     RuleMenu,
     // SceneMenu,
-    // GameMenu,
+    GameMenu,
 }
 
 /*
@@ -130,6 +130,23 @@ fn main() {
         .add_systems(
             OnExit(MyAppState::RuleMenu),
             (crate::rule::systems::despawn_rule_menu,),
+        )
+        /*
+         * GameMenu
+         */
+        .add_systems(
+            OnEnter(MyAppState::GameMenu),
+            (crate::game::systems::camera2dbundle,).chain(),
+        )
+        .add_systems(
+            Update,
+            (back_main_menu,)
+                .chain()
+                .run_if(in_state(MyAppState::GameMenu)),
+        )
+        .add_systems(
+            OnExit(MyAppState::GameMenu),
+            (crate::game::systems::despawn_game_menu,),
         )
         .run();
     /*
@@ -268,6 +285,42 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         MainMenu,
                     ));
                 });
+
+            /*
+             * game Button
+             */
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(150.0),
+                            height: Val::Px(65.0),
+                            border: UiRect::all(Val::Px(5.0)),
+                            // horizontally center child text
+                            justify_content: JustifyContent::Center,
+                            // vertically center child text
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        border_color: BorderColor(Color::BLACK),
+                        background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                        ..default()
+                    },
+                    MainMenu,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        TextBundle::from_section(
+                            "Game",
+                            TextStyle {
+                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                font_size: 40.0,
+                                color: Color::rgb(0.9, 0.9, 0.9),
+                            },
+                        ),
+                        MainMenu,
+                    ));
+                });
         });
 }
 
@@ -305,6 +358,10 @@ fn w_game_system(
                         if text.sections[0].value == "Rule".to_string() {
                             next_state.set(MyAppState::RuleMenu);
                             info!("w_game_system -> MyAppState::RuleMenu");
+                        }
+                        if text.sections[0].value == "Game".to_string() {
+                            next_state.set(MyAppState::GameMenu);
+                            info!("w_game_system -> MyAppState::GameMenu");
                         }
                     }
                     _ => (),
