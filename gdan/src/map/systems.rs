@@ -18,13 +18,16 @@ pub fn camera2dbundle(mut commands: Commands) {
 }
 
 pub fn map_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(TextBundle::from_section(
-        "show map",
-        TextStyle {
-            font: asset_server.load("fonts/FiraMono-Medium.ttf"),
-            font_size: 24.,
-            color: Color::WHITE,
-        },
+    commands.spawn((
+        TextBundle::from_section(
+            "show map",
+            TextStyle {
+                font: asset_server.load("fonts/FiraMono-Medium.ttf"),
+                font_size: 24.,
+                color: Color::WHITE,
+            },
+        ),
+        crate::map::entities::MapMenu,
     ));
 }
 
@@ -73,20 +76,11 @@ pub fn map_scale(
     }
 }
 
-// pub fn show_map(
-//     query: Query<&crate::map::components::MapName, With<crate::map::components::MapInfo>>,
-// ) {
-//     info!("show_map");
-//     for name in &query {
-//         println!("hello {}!", name.0);
-//     }
-// }
-
 pub fn despawn_map_menu(
     query_enemy: Query<Entity, With<crate::map::entities::MapMenu>>,
     mut commands: Commands,
 ) {
-    info!("despawn_main_menu");
+    info!("despawn_map_menu");
     for entity_id in query_enemy.iter() {
         // commands.entity(entity_id).remove::<MainInfo>();
         commands.entity(entity_id).despawn();

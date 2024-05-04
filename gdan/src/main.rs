@@ -11,7 +11,7 @@ use bevy::prelude::*;
 pub struct MainInfo;
 
 #[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
-enum MyAppState {
+pub enum MyAppState {
     #[default]
     MainMenu,
     MapMenu,
@@ -78,7 +78,7 @@ fn main() {
         )
         .add_systems(
             Update,
-            (crate::map::systems::map_scale,)
+            (back_main_menu, crate::map::systems::map_scale)
                 .chain()
                 .run_if(in_state(MyAppState::MapMenu)),
         )
@@ -95,7 +95,7 @@ fn main() {
         )
         .add_systems(
             Update,
-            (crate::rule::systems::draw_rule,)
+            (back_main_menu, crate::rule::systems::draw_rule)
                 .chain()
                 .run_if(in_state(MyAppState::RuleMenu)),
         )
@@ -262,6 +262,16 @@ fn w_game_system(
                 border_color.0 = Color::BLACK;
             }
         }
+    }
+}
+
+pub fn back_main_menu(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut next_state: ResMut<NextState<crate::MyAppState>>,
+) {
+    if keyboard.pressed(KeyCode::KeyB) {
+        next_state.set(crate::MyAppState::MainMenu);
+        info!("back_main_menu -> MyAppState::MainMenu");
     }
 }
 
