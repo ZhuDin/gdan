@@ -2,6 +2,7 @@
 
 use bevy::ecs::query::*;
 use bevy::ecs::system::*;
+use bevy::input::mouse::*;
 use bevy::log::*;
 use bevy::prelude::*;
 
@@ -55,9 +56,13 @@ pub fn add_map(mut commands: Commands, asset_server: Res<AssetServer>) {
         crate::map::entities::MapNC,
         crate::map::entities::MapMenu,
     ));
+
+    commands.insert_resource(crate::map::resources::MapInfo { scale: 0.5 });
 }
 
 pub fn map_scale(
+    mut scroll_evr: EventReader<MouseWheel>,
+    mut map_info: ResMut<crate::map::resources::MapInfo>,
     mut query: Query<
         &mut Transform,
         (
@@ -66,12 +71,34 @@ pub fn map_scale(
         ),
     >,
 ) {
+    for ev in scroll_evr.read() {
+        match ev.unit {
+            MouseScrollUnit::Line => {
+                if ev.y > 0. {
+                    if map_info.scale < 1.5 {
+                        map_info.scale += 0.1;
+                    }
+                } else if ev.y < 0. {
+                    if map_info.scale > 0.3 {
+                        map_info.scale -= 0.1;
+                    }
+                }
+            }
+            MouseScrollUnit::Pixel => {
+                // println!(
+                //     "Scroll (pixel units): vertical: {}, horizontal: {}",
+                //     ev.y, ev.x
+                // );
+                // map_info.scale -= 0.1;
+            }
+        }
+    }
     // Consider changing font-size instead of scaling the transform. Scaling a Text2D will scale the
     // rendered quad, resulting in a pixellated look.
     for mut transform in &mut query {
         // transform.translation = Vec3::new(400.0, 0.0, 0.0);
 
-        let scale = 1.;
+        let scale = map_info.scale;
         transform.scale.x = scale;
         transform.scale.y = scale;
     }
