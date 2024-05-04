@@ -50,7 +50,7 @@ fn main() {
         .init_state::<MyAppState>()
         .init_gizmo_group::<crate::rule::entities::MyRoundGizmos>()
         // .add_systems(Startup, (w_game_setup,).chain())
-        .add_systems(Update, bevy::window::close_on_esc)
+        .add_systems(Update, close_on_esc)
         /*
          * MainMenu
          * Note that we have used .chain() on the systems.
@@ -116,7 +116,11 @@ fn main() {
         )
         .add_systems(
             Update,
-            (back_main_menu, crate::rule::systems::draw_rule)
+            (
+                back_main_menu,
+                crate::rule::systems::draw_rule,
+                crate::rule::systems::draw_cursor,
+            )
                 .chain()
                 .run_if(in_state(MyAppState::RuleMenu)),
         )
@@ -336,6 +340,22 @@ pub fn back_main_menu(
     }
 }
 
+pub fn tips_info(mut commands: Commands, asset_server: Res<AssetServer>) {
+    info!("tips_info");
+    commands.spawn((
+        TextBundle::from_section(
+            "press Esc to Closing window \n
+                press B back to Main Menu",
+            TextStyle {
+                font: asset_server.load("fonts/FiraMono-Medium.ttf"),
+                font_size: 24.,
+                color: Color::WHITE,
+            },
+        ),
+        crate::map::entities::MapMenu,
+    ));
+}
+
 // You can remove components on existing entities, using Commands or exclusive World access.
 fn despawn_main_menu(query_enemy: Query<Entity, With<MainInfo>>, mut commands: Commands) {
     info!("despawn_main_menu");
@@ -346,8 +366,20 @@ fn despawn_main_menu(query_enemy: Query<Entity, With<MainInfo>>, mut commands: C
     }
 }
 
-// fn exit_system(mut exit: EventWriter<AppExit>, keyboard_input: Res<ButtonInput<KeyCode>>) {
-//     if keyboard_input.just_released(KeyCode::Escape) {
-//         exit.send(AppExit);
-//     }
-// }
+pub fn close_on_esc(
+    // mut commands: Commands,
+    // focused_windows: Query<(Entity, &Window)>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut exit: EventWriter<AppExit>,
+) {
+    // for (window, focus) in focused_windows.iter() {
+    //     if !focus.focused {
+    //         continue;
+    //     }
+
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        // commands.entity(window).despawn();
+        exit.send(AppExit);
+    }
+    // }
+}
