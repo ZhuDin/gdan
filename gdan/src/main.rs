@@ -15,7 +15,7 @@ pub enum MyAppState {
     #[default]
     MainMenu,
     MapMenu,
-    // OperMenu,
+    OperMenu,
     RuleMenu,
     // SceneMenu,
     // GameMenu,
@@ -87,6 +87,23 @@ fn main() {
             (crate::map::systems::despawn_map_menu,),
         )
         /*
+         * OperMenu
+         */
+        .add_systems(
+            OnEnter(MyAppState::OperMenu),
+            (crate::oper::systems::camera2dbundle,).chain(),
+        )
+        .add_systems(
+            Update,
+            (back_main_menu,)
+                .chain()
+                .run_if(in_state(MyAppState::OperMenu)),
+        )
+        .add_systems(
+            OnExit(MyAppState::OperMenu),
+            (crate::oper::systems::despawn_oper_menu,),
+        )
+        /*
          * RuleMenu
          */
         .add_systems(
@@ -143,7 +160,7 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .with_children(|parent| {
             /*
-             * map button
+             * map Button
              */
             parent
                 .spawn((
@@ -179,7 +196,43 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 });
 
             /*
-             * rule button
+             * oper Button
+             */
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(150.0),
+                            height: Val::Px(65.0),
+                            border: UiRect::all(Val::Px(5.0)),
+                            // horizontally center child text
+                            justify_content: JustifyContent::Center,
+                            // vertically center child text
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        border_color: BorderColor(Color::BLACK),
+                        background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                        ..default()
+                    },
+                    MainInfo,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        TextBundle::from_section(
+                            "Oper",
+                            TextStyle {
+                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                font_size: 40.0,
+                                color: Color::rgb(0.9, 0.9, 0.9),
+                            },
+                        ),
+                        MainInfo,
+                    ));
+                });
+
+            /*
+             * rule Button
              */
             parent
                 .spawn((
@@ -242,6 +295,10 @@ fn w_game_system(
                         if text.sections[0].value == "Map".to_string() {
                             next_state.set(MyAppState::MapMenu);
                             info!("w_game_system -> MyAppState::MapMenu");
+                        }
+                        if text.sections[0].value == "Oper".to_string() {
+                            next_state.set(MyAppState::OperMenu);
+                            info!("w_game_system -> MyAppState::OperMenu");
                         }
                         if text.sections[0].value == "Rule".to_string() {
                             next_state.set(MyAppState::RuleMenu);
