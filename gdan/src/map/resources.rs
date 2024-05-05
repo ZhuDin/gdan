@@ -21,3 +21,7 @@ pub struct MapInfo {
     pub satellite_map_level: u8,
     pub meter_per_pixel: f32,
 }
+
+/// We will store the world position of the mouse cursor here.
+#[derive(Resource, Default)]
+pub struct Camera2dCoords(pub bevy::math::Vec2);

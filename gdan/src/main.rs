@@ -7,10 +7,10 @@ pub mod scene;
 use bevy::app::*;
 use bevy::prelude::*;
 
-#[derive(Component)]
+#[derive(bevy::ecs::component::Component)]
 pub struct MainMenu;
 
-#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(bevy::ecs::schedule::States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MyAppState {
     #[default]
     MainMenu,
@@ -38,11 +38,10 @@ fn main() {
      * The runner interprets the schedule to control the broad execution strategy.
      */
     App::new()
-        .add_plugins(DefaultPlugins)
-        .insert_resource(crate::map::resources::GreetTimer(Timer::from_seconds(
-            5.0,
-            TimerMode::Repeating,
-        )))
+        .add_plugins(bevy::DefaultPlugins)
+        .insert_resource(crate::map::resources::GreetTimer(
+            bevy::time::Timer::from_seconds(5.0, bevy::time::TimerMode::Repeating),
+        ))
         // Register the state type(s) in the app builder
         // Specify the initial value:
         // .insert_state(MyAppState::Main)
@@ -179,22 +178,28 @@ fn main() {
      */
 }
 
-pub fn camera2dbundle(mut commands: Commands) {
+pub fn camera2dbundle(mut commands: bevy::ecs::system::Commands) {
     info!("camera2dbundle");
-    commands.spawn((Camera2dBundle::default(), MainMenu));
+    commands.spawn((
+        bevy::core_pipeline::core_2d::Camera2dBundle::default(),
+        MainMenu,
+    ));
 }
 
-fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn w_game_setup(
+    mut commands: bevy::ecs::system::Commands,
+    asset_server: bevy::ecs::system::Res<bevy::asset::AssetServer>,
+) {
     info!("w_game_setup");
 
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
+            bevy::ui::node_bundles::NodeBundle {
+                style: bevy::ui::Style {
+                    width: bevy::ui::Val::Percent(100.0),
+                    height: bevy::ui::Val::Percent(100.0),
+                    align_items: bevy::ui::AlignItems::Center,
+                    justify_content: bevy::ui::JustifyContent::Center,
                     ..default()
                 },
                 ..default()
@@ -207,31 +212,31 @@ fn w_game_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
              */
             parent
                 .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            width: Val::Px(150.0),
-                            height: Val::Px(65.0),
-                            border: UiRect::all(Val::Px(5.0)),
+                    bevy::ui::node_bundles::ButtonBundle {
+                        style: bevy::ui::Style {
+                            width: bevy::ui::Val::Px(150.0),
+                            height: bevy::ui::Val::Px(65.0),
+                            border: bevy::ui::UiRect::all(bevy::ui::Val::Px(5.0)),
                             // horizontally center child text
-                            justify_content: JustifyContent::Center,
+                            justify_content: bevy::ui::JustifyContent::Center,
                             // vertically center child text
-                            align_items: AlignItems::Center,
+                            align_items: bevy::ui::AlignItems::Center,
                             ..default()
                         },
-                        border_color: BorderColor(Color::BLACK),
-                        background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                        border_color: bevy::ui::BorderColor(bevy::render::color::Color::BLACK),
+                        background_color: bevy::render::color::Color::rgb(0.15, 0.15, 0.15).into(),
                         ..default()
                     },
                     MainMenu,
                 ))
                 .with_children(|parent| {
                     parent.spawn((
-                        TextBundle::from_section(
+                        bevy::ui::node_bundles::TextBundle::from_section(
                             "Map",
-                            TextStyle {
+                            bevy::text::TextStyle {
                                 font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                                 font_size: 40.0,
-                                color: Color::rgb(0.9, 0.9, 0.9),
+                                color: bevy::render::color::Color::rgb(0.9, 0.9, 0.9),
                             },
                         ),
                         MainMenu,

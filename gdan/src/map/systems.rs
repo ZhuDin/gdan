@@ -12,16 +12,43 @@ use bevy::prelude::*;
  * creating/destroying entities, components, and resources using Commands (Commands)
  * sending/receiving events using EventWriter/EventReader
  */
+pub fn init_map(mut commands: Commands) {
+    info!("init_map");
 
-pub fn camera2dbundle(mut commands: Commands, map_info: Res<crate::map::resources::MapInfo>) {
+    let label_x: u32 = 3;
+    let label_y: u32 = 4;
+
+    let unit_x: f32 = 1440.;
+    let unit_y: f32 = 810.;
+
+    commands.insert_resource(crate::map::resources::MapInfo {
+        scale: 5.,
+        unit_x,
+        unit_y,
+        label_x,
+        label_y,
+        // level 21: 10.meter/72.pixel
+        // level 22: 5.meter/72.pixel
+        satellite_map_level: 21,
+        meter_per_pixel: 10. / 72.,
+    });
+
+    commands.insert_resource(crate::map::resources::Camera2dCoords(Vec2::new(
+        (label_x as f32 * unit_x) / 2. - unit_x / 2.,
+        (label_y as f32 * unit_y) / 2. - unit_y / 2.,
+    )));
+}
+
+pub fn camera2dbundle(
+    mut commands: Commands,
+    map_info: Res<crate::map::resources::MapInfo>,
+    camera2dcoords: Res<crate::map::resources::Camera2dCoords>,
+) {
     info!("camera2dbundle");
+
     commands.spawn((
         Camera2dBundle {
-            transform: Transform::from_xyz(
-                (map_info.label_x as f32 * map_info.unit_x) / 2. - map_info.unit_x / 2.,
-                (map_info.label_y as f32 * map_info.unit_y) / 2. - map_info.unit_y / 2.,
-                0.0,
-            ),
+            transform: Transform::from_xyz(camera2dcoords.0.x, camera2dcoords.0.y, 0.0),
             projection: OrthographicProjection {
                 /*
                  * The projection contains the near and far values,
@@ -31,7 +58,7 @@ pub fn camera2dbundle(mut commands: Commands, map_info: Res<crate::map::resource
                  */
                 near: -1000.0,
                 far: 1000.0,
-                scale: 5.,
+                scale: map_info.scale,
 
                 ..default()
             },
@@ -54,21 +81,6 @@ pub fn map_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         ),
         crate::map::entities::MapMenu,
     ));
-}
-
-pub fn init_map(mut commands: Commands) {
-    info!("init_map");
-    commands.insert_resource(crate::map::resources::MapInfo {
-        scale: 0.5,
-        unit_x: 1440.,
-        unit_y: 810.,
-        label_x: 3,
-        label_y: 4,
-        // level 20: 10.meter/72.pixel
-        // level 21: 5.meter/72.pixel
-        satellite_map_level: 20,
-        meter_per_pixel: 10. / 72.,
-    });
 }
 
 pub fn add_map(
@@ -104,8 +116,9 @@ pub fn add_map(
 }
 
 pub fn map_scale(
+    mut query_camera: Query<&mut OrthographicProjection, With<crate::map::entities::MapMenu>>,
     mut scroll_evr: EventReader<MouseWheel>,
-    mut map_info: ResMut<crate::map::resources::MapInfo>,
+    // mut map_info: ResMut<crate::map::resources::MapInfo>,
     // mut query: Query<
     //     &mut Transform,
     //     (
@@ -114,17 +127,14 @@ pub fn map_scale(
     //     ),
     // >,
 ) {
+    let mut projection = query_camera.single_mut();
     for ev in scroll_evr.read() {
         match ev.unit {
             MouseScrollUnit::Line => {
-                if ev.y > 0. {
-                    if map_info.scale < 1.5 {
-                        map_info.scale += 0.1;
-                    }
-                } else if ev.y < 0. {
-                    if map_info.scale > 0.3 {
-                        map_info.scale -= 0.1;
-                    }
+                if ev.y > 0. && projection.scale > 0.8 {
+                    projection.scale /= 1.25;
+                } else if ev.y < 0. && projection.scale < 8. {
+                    projection.scale *= 1.25;
                 }
             }
             MouseScrollUnit::Pixel => {
