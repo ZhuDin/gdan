@@ -56,7 +56,7 @@ pub fn draw_rule(
 
 pub fn draw_cursor(
     camera_query: Query<(&Camera, &GlobalTransform)>,
-    windows: Query<&Window>,
+    windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
     mut gizmos: Gizmos,
 ) {
     let (camera, camera_transform) = camera_query.single();

@@ -82,7 +82,7 @@ fn main() {
         )
         .add_systems(
             Update,
-            (back_main_menu, crate::map::systems::map_scale)
+            (back_main_menu, crate::map::systems::map_scale_wander)
                 .chain()
                 .run_if(in_state(MyAppState::MapMenu)),
         )
@@ -446,19 +446,28 @@ fn despawn_main_menu(query_enemy: Query<Entity, With<MainMenu>>, mut commands: C
 }
 
 pub fn close_on_esc(
-    // mut commands: Commands,
-    // focused_windows: Query<(Entity, &Window)>,
+    mut commands: Commands,
+    state: Res<State<MyAppState>>,
+    mut next_state: ResMut<NextState<MyAppState>>,
+    focused_windows: Query<(Entity, &Window)>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut exit: EventWriter<AppExit>,
 ) {
-    // for (window, focus) in focused_windows.iter() {
-    //     if !focus.focused {
-    //         continue;
-    //     }
-
     if keyboard_input.just_pressed(KeyCode::Escape) {
-        // commands.entity(window).despawn();
-        exit.send(AppExit);
+        match state.get() {
+            MyAppState::MainMenu => {
+                for (window, focus) in focused_windows.iter() {
+                    if !focus.focused {
+                        continue;
+                    }
+                    commands.entity(window).despawn();
+                }
+            }
+            _ => {
+                next_state.set(MyAppState::MainMenu);
+                exit.send(AppExit);
+            }
+        }
+        // std::thread::sleep(std::time::Duration::from_millis(100));
     }
-    // }
 }

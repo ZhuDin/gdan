@@ -42,3 +42,6 @@ pub struct MapNC;
 
 #[derive(Component)]
 pub struct MapHexagon;
+
+#[derive(Component)]
+pub struct MapCamera2d;

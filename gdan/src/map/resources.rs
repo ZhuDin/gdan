@@ -25,3 +25,11 @@ pub struct MapInfo {
 /// We will store the world position of the mouse cursor here.
 #[derive(Resource, Default)]
 pub struct Camera2dCoords(pub bevy::math::Vec2);
+
+#[derive(Resource, Default)]
+pub struct MouseCoords {
+    pub pre_x: f32,
+    pub pre_y: f32,
+    pub x: f32,
+    pub y: f32,
+}

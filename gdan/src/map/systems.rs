@@ -34,9 +34,16 @@ pub fn init_map(mut commands: Commands) {
     });
 
     commands.insert_resource(crate::map::resources::Camera2dCoords(Vec2::new(
-        (label_x as f32 * unit_x) / 2. - unit_x / 2.,
-        (label_y as f32 * unit_y) / 2. - unit_y / 2.,
+        label_x as f32 / 2. * unit_x - unit_x / 4.,
+        label_y as f32 / 2. * unit_y - unit_y,
     )));
+
+    commands.insert_resource(crate::map::resources::MouseCoords {
+        pre_x: 0.,
+        pre_y: 0.,
+        x: 0.,
+        y: 0.,
+    });
 }
 
 pub fn camera2dbundle(
@@ -59,11 +66,12 @@ pub fn camera2dbundle(
                 near: -1000.0,
                 far: 1000.0,
                 scale: map_info.scale,
-
                 ..default()
             },
             ..default()
         },
+        // bevy::core_pipeline::core_2d::Camera2dBundle::default(),
+        crate::map::entities::MapCamera2d,
         crate::map::entities::MapMenu,
     ));
 }
@@ -115,19 +123,25 @@ pub fn add_map(
     }
 }
 
-pub fn map_scale(
-    mut query_camera: Query<&mut OrthographicProjection, With<crate::map::entities::MapMenu>>,
+pub fn map_scale_wander(
+    mut query_camera_projection: Query<
+        &mut OrthographicProjection,
+        With<crate::map::entities::MapMenu>,
+    >,
+    mut query_camera_transform: Query<
+        &mut Transform,
+        (
+            With<crate::map::entities::MapMenu>,
+            With<crate::map::entities::MapCamera2d>,
+        ),
+    >,
+    buttons: Res<ButtonInput<MouseButton>>,
     mut scroll_evr: EventReader<MouseWheel>,
+    q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
+    mut mouse_coords: ResMut<crate::map::resources::MouseCoords>,
     // mut map_info: ResMut<crate::map::resources::MapInfo>,
-    // mut query: Query<
-    //     &mut Transform,
-    //     (
-    //         With<crate::map::entities::MapMenu>,
-    //         With<crate::map::entities::MapNC>,
-    //     ),
-    // >,
 ) {
-    let mut projection = query_camera.single_mut();
+    let mut projection = query_camera_projection.single_mut();
     for ev in scroll_evr.read() {
         match ev.unit {
             MouseScrollUnit::Line => {
@@ -146,14 +160,37 @@ pub fn map_scale(
             }
         }
     }
-    // Consider changing font-size instead of scaling the transform. Scaling a Text2D will scale the
-    // rendered quad, resulting in a pixellated look.
-    // for mut transform in &mut query {
-    // transform.translation = Vec3::new(400.0, 0.0, 0.0);
-    // let scale = map_info.scale;
-    //     transform.scale.x = scale;
-    //     transform.scale.y = scale;
-    // }
+    let mut transform = query_camera_transform.single_mut();
+    if buttons.just_pressed(MouseButton::Left) {
+        if let Some(position) = q_windows.single().cursor_position() {
+            mouse_coords.pre_x = position.x;
+            mouse_coords.pre_y = position.y;
+        } else {
+            info!("Cursor is not in the game window.");
+        }
+    }
+    if buttons.just_released(MouseButton::Left) {
+        if let Some(position) = q_windows.single().cursor_position() {
+            if position.x > mouse_coords.pre_x && position.y > mouse_coords.pre_y {
+                transform.translation.x -= position.x - mouse_coords.pre_x;
+                transform.translation.y += position.y - mouse_coords.pre_y;
+            }
+            if position.x > mouse_coords.pre_x && position.y < mouse_coords.pre_y {
+                transform.translation.x -= position.x - mouse_coords.pre_x;
+                transform.translation.y -= mouse_coords.pre_y - position.y;
+            }
+            if position.x < mouse_coords.pre_x && position.y > mouse_coords.pre_y {
+                transform.translation.x += mouse_coords.pre_x - position.x;
+                transform.translation.y += position.y - mouse_coords.pre_y;
+            }
+            if position.x < mouse_coords.pre_x && position.y < mouse_coords.pre_y {
+                transform.translation.x += mouse_coords.pre_x - position.x;
+                transform.translation.y -= mouse_coords.pre_y - position.y;
+            }
+        } else {
+            info!("Cursor is not in the game window.");
+        }
+    }
 }
 
 pub fn despawn_map_menu(
