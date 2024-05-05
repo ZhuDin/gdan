@@ -1,5 +1,4 @@
 // Entities: a simple type containing a unique integer
-use bevy::ecs::component::Component;
 
 /*
  * Component types that are empty structs (contain no data) are called marker components.
@@ -34,14 +33,14 @@ use bevy::ecs::component::Component;
 }
  */
 
-#[derive(Component)]
+#[derive(bevy::ecs::component::Component)]
 pub struct MapMenu;
 
-#[derive(Component)]
+#[derive(bevy::ecs::component::Component)]
 pub struct MapNC;
 
-#[derive(Component)]
+#[derive(bevy::ecs::component::Component)]
 pub struct MapHexagon;
 
-#[derive(Component)]
+#[derive(bevy::ecs::component::Component)]
 pub struct MapCamera2d;

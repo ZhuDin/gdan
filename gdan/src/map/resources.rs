@@ -1,6 +1,3 @@
-use bevy::ecs::system::*;
-use bevy::time::*;
-
 /*
  * If there is only one global instance (singleton) of something, such as configuration / settings.
  * and it is standalone (not associated with other data), create a Resource.
@@ -8,10 +5,10 @@ use bevy::time::*;
  * Resources allow you to store a single global instance of some data type, independently of entities.
  */
 
-#[derive(Resource)]
-pub struct GreetTimer(pub Timer);
+#[derive(bevy::ecs::system::Resource)]
+pub struct GreetTimer(pub bevy::time::Timer);
 
-#[derive(Resource)]
+#[derive(bevy::ecs::system::Resource)]
 pub struct MapInfo {
     pub scale: f32,
     pub unit_x: f32,
@@ -23,10 +20,10 @@ pub struct MapInfo {
 }
 
 /// We will store the world position of the mouse cursor here.
-#[derive(Resource, Default)]
+#[derive(bevy::ecs::system::Resource, Default)]
 pub struct Camera2dCoords(pub bevy::math::Vec2);
 
-#[derive(Resource, Default)]
+#[derive(bevy::ecs::system::Resource, Default)]
 pub struct MouseCoords {
     pub pre_x: f32,
     pub pre_y: f32,

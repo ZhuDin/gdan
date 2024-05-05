@@ -1,9 +1,5 @@
 // Systems: normal Rust functions
 
-use bevy::ecs::query::*;
-use bevy::ecs::system::*;
-use bevy::input::mouse::*;
-use bevy::log::*;
 use bevy::prelude::*;
 
 /*
@@ -136,7 +132,7 @@ pub fn map_scale_wander(
         ),
     >,
     buttons: Res<ButtonInput<MouseButton>>,
-    mut scroll_evr: EventReader<MouseWheel>,
+    mut scroll_evr: EventReader<bevy::input::mouse::MouseWheel>,
     q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
     mut mouse_coords: ResMut<crate::map::resources::MouseCoords>,
     // mut map_info: ResMut<crate::map::resources::MapInfo>,
@@ -144,14 +140,14 @@ pub fn map_scale_wander(
     let mut projection = query_camera_projection.single_mut();
     for ev in scroll_evr.read() {
         match ev.unit {
-            MouseScrollUnit::Line => {
+            bevy::input::mouse::MouseScrollUnit::Line => {
                 if ev.y > 0. && projection.scale > 0.8 {
                     projection.scale /= 1.25;
                 } else if ev.y < 0. && projection.scale < 8. {
                     projection.scale *= 1.25;
                 }
             }
-            MouseScrollUnit::Pixel => {
+            bevy::input::mouse::MouseScrollUnit::Pixel => {
                 // println!(
                 //     "Scroll (pixel units): vertical: {}, horizontal: {}",
                 //     ev.y, ev.x

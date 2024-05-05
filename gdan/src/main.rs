@@ -4,7 +4,6 @@ pub mod oper;
 pub mod rule;
 pub mod scene;
 
-use bevy::app::*;
 use bevy::prelude::*;
 
 #[derive(bevy::ecs::component::Component)]
@@ -451,7 +450,7 @@ pub fn close_on_esc(
     mut next_state: ResMut<NextState<MyAppState>>,
     focused_windows: Query<(Entity, &Window)>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut exit: EventWriter<AppExit>,
+    mut exit: EventWriter<bevy::app::AppExit>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         match state.get() {
@@ -465,7 +464,7 @@ pub fn close_on_esc(
             }
             _ => {
                 next_state.set(MyAppState::MainMenu);
-                exit.send(AppExit);
+                exit.send(bevy::app::AppExit);
             }
         }
         // std::thread::sleep(std::time::Duration::from_millis(100));
