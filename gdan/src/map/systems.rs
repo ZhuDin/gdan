@@ -117,6 +117,31 @@ pub fn add_map(
             ));
         }
     }
+
+    commands.spawn((
+        SpriteBundle {
+            texture: asset_server.load("wg/ncly/level21/hexagon.png"),
+
+            transform: Transform {
+                translation: Vec3 {
+                    x: map_info.label_x as f32 / 2. * map_info.unit_x - map_info.unit_x / 2.,
+                    y: map_info.label_y as f32 / 2. * map_info.unit_y - map_info.unit_y / 2.,
+                    z: 1.,
+                },
+                scale: Vec3 {
+                    x: 0.378,
+                    y: 0.378,
+                    z: 0.,
+                },
+                ..default()
+            },
+
+            ..default()
+        },
+        crate::map::entities::MapHexagon,
+        crate::map::entities::MapNC,
+        crate::map::entities::MapMenu,
+    ));
 }
 
 pub fn map_scale_wander(
