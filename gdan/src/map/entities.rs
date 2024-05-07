@@ -44,3 +44,9 @@ pub struct MapHexagon;
 
 #[derive(bevy::ecs::component::Component)]
 pub struct MapCamera2d;
+
+#[derive(bevy::ecs::component::Component)]
+pub struct MapCamera3d;
+
+#[derive(bevy::ecs::component::Component)]
+pub struct Map3d;

@@ -14,6 +14,7 @@ pub enum MyAppState {
     #[default]
     MainMenu,
     MapMenu,
+    Map3D,
     OperMenu,
     RuleMenu,
     // SceneMenu,
@@ -81,12 +82,39 @@ fn main() {
         )
         .add_systems(
             Update,
-            (back_main_menu, crate::map::systems::map_scale_wander)
+            (
+                back_main_menu,
+                crate::map::systems::map_menu_system,
+                crate::map::systems::map2d_scale_wander,
+            )
                 .chain()
                 .run_if(in_state(MyAppState::MapMenu)),
         )
         .add_systems(
             OnExit(MyAppState::MapMenu),
+            (crate::map::systems::despawn_map_menu,),
+        )
+        /*
+         * Map3D
+         */
+        .add_systems(
+            OnEnter(MyAppState::Map3D),
+            (
+                crate::map::systems::camera3dbundle,
+                crate::map::systems::init_map,
+                crate::map::systems::map_menu,
+                crate::map::systems::add_map,
+            )
+                .chain(),
+        )
+        .add_systems(
+            Update,
+            (back_main_menu, crate::map::systems::map_menu_system)
+                .chain()
+                .run_if(in_state(MyAppState::Map3D)),
+        )
+        .add_systems(
+            OnExit(MyAppState::Map3D),
             (crate::map::systems::despawn_map_menu,),
         )
         /*

@@ -24,6 +24,9 @@ pub struct MapInfo {
 pub struct Camera2dCoords(pub bevy::math::Vec2);
 
 #[derive(bevy::ecs::system::Resource, Default)]
+pub struct Camera3dCoords(pub bevy::math::Vec3);
+
+#[derive(bevy::ecs::system::Resource, Default)]
 pub struct MouseCoords {
     pub pre_x: f32,
     pub pre_y: f32,

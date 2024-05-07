@@ -29,6 +29,12 @@ pub fn init_map(mut commands: Commands) {
         meter_per_pixel: 10. / 72.,
     });
 
+    commands.insert_resource(crate::map::resources::Camera3dCoords(Vec3::new(
+        // label_x as f32 / 2. * unit_x - unit_x / 4.,
+        // label_y as f32 / 2. * unit_y - unit_y,
+        0., 0., 20.,
+    )));
+
     commands.insert_resource(crate::map::resources::Camera2dCoords(Vec2::new(
         label_x as f32 / 2. * unit_x - unit_x / 4.,
         label_y as f32 / 2. * unit_y - unit_y,
@@ -72,6 +78,23 @@ pub fn camera2dbundle(
     ));
 }
 
+pub fn camera3dbundle(
+    mut commands: Commands,
+    camera3dcoords: Res<crate::map::resources::Camera3dCoords>,
+) {
+    info!("camera3dbundle");
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_xyz(3.0, 5.0, camera3dcoords.0.z)
+                .looking_at(Vec3::ZERO, Vec3::Y),
+
+            ..default()
+        },
+        crate::map::entities::MapCamera3d,
+        crate::map::entities::MapMenu,
+    ));
+}
+
 pub fn map_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("map_menu");
     commands.spawn((
@@ -85,75 +108,194 @@ pub fn map_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         ),
         crate::map::entities::MapMenu,
     ));
+
+    /*
+     * map Button
+     */
+    commands
+        .spawn((
+            bevy::ui::node_bundles::NodeBundle {
+                style: bevy::ui::Style {
+                    width: bevy::ui::Val::Percent(100.0),
+                    height: bevy::ui::Val::Percent(100.0),
+                    align_items: bevy::ui::AlignItems::End,
+                    justify_content: bevy::ui::JustifyContent::Center,
+                    ..default()
+                },
+                ..default()
+            },
+            crate::map::entities::Map3d,
+            crate::map::entities::MapMenu,
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    bevy::ui::node_bundles::ButtonBundle {
+                        style: bevy::ui::Style {
+                            width: bevy::ui::Val::Px(120.0),
+                            height: bevy::ui::Val::Px(50.0),
+                            border: bevy::ui::UiRect::all(bevy::ui::Val::Px(5.0)),
+                            // horizontally center child text
+                            justify_content: bevy::ui::JustifyContent::Center,
+                            // vertically center child text
+                            align_items: bevy::ui::AlignItems::Center,
+                            ..default()
+                        },
+                        border_color: bevy::ui::BorderColor(bevy::render::color::Color::BLACK),
+                        background_color: bevy::render::color::Color::rgb(0.15, 0.15, 0.15).into(),
+                        ..default()
+                    },
+                    crate::map::entities::Map3d,
+                    crate::map::entities::MapMenu,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        bevy::ui::node_bundles::TextBundle::from_section(
+                            "3D",
+                            bevy::text::TextStyle {
+                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                font_size: 40.0,
+                                color: bevy::render::color::Color::rgb(0.9, 0.9, 0.9),
+                            },
+                        ),
+                        crate::map::entities::Map3d,
+                        crate::map::entities::MapMenu,
+                    ));
+                });
+        });
+}
+
+pub fn map_menu_system(
+    mut interaction_query: Query<
+        (
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &Children,
+        ),
+        (Changed<Interaction>, With<Button>),
+    >,
+    state: Res<State<crate::MyAppState>>,
+    mut next_state: ResMut<NextState<crate::MyAppState>>,
+    mut text_query: Query<&mut Text>,
+) {
+    for (interaction, mut color, mut border_color, children) in &mut interaction_query {
+        let text = text_query.get_mut(children[0]).unwrap();
+        match *interaction {
+            Interaction::Pressed => match state.get() {
+                crate::MyAppState::MapMenu => {
+                    if text.sections[0].value == "3D".to_string() {
+                        next_state.set(crate::MyAppState::Map3D);
+                        info!("w_game_system -> MyAppState::Map3D");
+                    }
+                }
+                _ => (),
+            },
+            Interaction::Hovered => {
+                // text.sections[0].value = "Hover".to_string();
+                *color = Color::rgb(0.25, 0.25, 0.25).into();
+                border_color.0 = Color::WHITE;
+            }
+            Interaction::None => {
+                // text.sections[0].value = "Button".to_string();
+                *color = Color::rgb(0.15, 0.15, 0.15).into();
+                border_color.0 = Color::BLACK;
+            }
+        }
+    }
 }
 
 pub fn add_map(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    state: Res<State<crate::MyAppState>>,
     map_info: Res<crate::map::resources::MapInfo>,
 ) {
     info!("add_map");
+    match state.get() {
+        crate::MyAppState::MapMenu => {
+            for x in 0..map_info.label_x {
+                for y in 0..map_info.label_y {
+                    commands.spawn((
+                        SpriteBundle {
+                            texture: asset_server.load(
+                                "wg/ncly/level21/".to_string()
+                                    + (x + 1).to_string().as_str()
+                                    + "-"
+                                    + (y + 1).to_string().as_str()
+                                    + ".png",
+                            ),
+                            transform: Transform::from_xyz(
+                                x as f32 * map_info.unit_x,
+                                y as f32 * map_info.unit_y,
+                                0.,
+                            ),
+                            ..default()
+                        },
+                        crate::map::entities::MapNC,
+                        crate::map::entities::MapMenu,
+                    ));
+                }
+            }
 
-    for x in 0..map_info.label_x {
-        for y in 0..map_info.label_y {
             commands.spawn((
                 SpriteBundle {
-                    texture: asset_server.load(
-                        "wg/ncly/level21/".to_string()
-                            + (x + 1).to_string().as_str()
-                            + "-"
-                            + (y + 1).to_string().as_str()
-                            + ".png",
-                    ),
-                    transform: Transform::from_xyz(
-                        x as f32 * map_info.unit_x,
-                        y as f32 * map_info.unit_y,
-                        0.,
-                    ),
+                    texture: asset_server.load("wg/ncly/level21/hexagon.png"),
+
+                    transform: Transform {
+                        translation: Vec3 {
+                            x: map_info.label_x as f32 / 2. * map_info.unit_x
+                                - map_info.unit_x / 2.,
+                            y: map_info.label_y as f32 / 2. * map_info.unit_y
+                                - map_info.unit_y / 2.,
+                            z: 1.,
+                        },
+                        scale: Vec3 {
+                            x: 0.378,
+                            y: 0.378,
+                            z: 0.,
+                        },
+                        ..default()
+                    },
+
                     ..default()
                 },
+                crate::map::entities::MapHexagon,
                 crate::map::entities::MapNC,
                 crate::map::entities::MapMenu,
             ));
         }
-    }
 
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("wg/ncly/level21/hexagon.png"),
-
-            transform: Transform {
-                translation: Vec3 {
-                    x: map_info.label_x as f32 / 2. * map_info.unit_x - map_info.unit_x / 2.,
-                    y: map_info.label_y as f32 / 2. * map_info.unit_y - map_info.unit_y / 2.,
-                    z: 1.,
-                },
-                scale: Vec3 {
-                    x: 0.378,
-                    y: 0.378,
-                    z: 0.,
-                },
+        crate::MyAppState::Map3D => {
+            commands.spawn(PbrBundle {
+                mesh: meshes.add(Rectangle::new(8., 8.)).clone(),
+                material: materials.add(StandardMaterial {
+                    base_color_texture: Some(asset_server.load("wg/ncly/level21/1-1.png").clone()),
+                    alpha_mode: AlphaMode::Blend,
+                    unlit: true,
+                    ..default()
+                }),
+                transform: Transform::from_xyz(0.0, 0.0, 0.)
+                    .with_rotation(Quat::from_rotation_x(-core::f32::consts::PI / 5.0)),
                 ..default()
-            },
-
-            ..default()
-        },
-        crate::map::entities::MapHexagon,
-        crate::map::entities::MapNC,
-        crate::map::entities::MapMenu,
-    ));
+            });
+        }
+        _ => (),
+    }
 }
 
-pub fn map_scale_wander(
+pub fn map2d_scale_wander(
     mut query_camera_projection: Query<
         &mut OrthographicProjection,
         With<crate::map::entities::MapMenu>,
     >,
-    mut query_camera_transform: Query<
+    mut query_camera2d_transform: Query<
         &mut Transform,
         (
-            With<crate::map::entities::MapMenu>,
             With<crate::map::entities::MapCamera2d>,
+            Without<crate::map::entities::MapCamera3d>,
         ),
     >,
     buttons: Res<ButtonInput<MouseButton>>,
@@ -181,7 +323,7 @@ pub fn map_scale_wander(
             }
         }
     }
-    let mut transform = query_camera_transform.single_mut();
+    let mut transform = query_camera2d_transform.single_mut();
     if buttons.just_pressed(MouseButton::Left) {
         if let Some(position) = q_windows.single().cursor_position() {
             mouse_coords.pre_x = position.x;
