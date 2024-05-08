@@ -101,7 +101,6 @@ fn main() {
             OnEnter(MyAppState::Map3D),
             (
                 crate::map::systems::camera3dbundle,
-                crate::map::systems::init_map,
                 crate::map::systems::map_menu,
                 crate::map::systems::add_map,
             )
@@ -109,7 +108,11 @@ fn main() {
         )
         .add_systems(
             Update,
-            (back_main_menu, crate::map::systems::map_menu_system)
+            (
+                back_main_menu,
+                crate::map::systems::map_menu_system,
+                crate::map::systems::map3d_scale_wander,
+            )
                 .chain()
                 .run_if(in_state(MyAppState::Map3D)),
         )
