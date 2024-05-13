@@ -37,8 +37,14 @@ pub fn init_map(mut commands: Commands) {
     commands.insert_resource(crate::map::resources::Camera3dCoords(Vec3::new(
         // label_x as f32 / 2. * unit_x - unit_x / 4.,
         // label_y as f32 / 2. * unit_y - unit_y,
-        0., 0., 0.,
+        // -2.5, 4.5, 9.0,
+        0., 0., 10.,
     )));
+
+    commands.insert_resource(crate::map::resources::Camera3dProjection {
+        persp_fov: 0.,
+        ortho_scale: 0.,
+    });
 
     commands.insert_resource(crate::map::resources::MouseCoords {
         pre_x: 0.,
@@ -78,15 +84,37 @@ pub fn camera2dbundle(
     ));
 }
 
+/*
+ * Bevy uses a right-handed Y-up coordinate system for the game world.
+ * The coordinate system is the same for 3D and 2D, for consistency.
+ * It is easiest to explain in terms of 2D:
+ * The X axis goes from left to right (+X points right).
+ * The Y axis goes from bottom to top (+Y points up).
+ * The Z axis goes from far to near (+Z points towards you, out of the screen).
+ * For 2D, the origin (X=0.0; Y=0.0) is at the center of the screen by default.
+ * When you are working with 2D sprites, you can put the background on Z=0.0,
+ * and place other sprites at increasing positive Z coordinates to layer them on top.
+ *
+ * In 3D, the axes are oriented the same way:
+ * Y points up
+ * The forward direction is -Z
+ * This is a right-handed coordinate system.
+ * You can use the fingers of your right hand to visualize the 3 axes: thumb=X, index=Y, middle=Z.
+ */
 pub fn camera3dbundle(
     mut commands: Commands,
-    // camera3dcoords: Res<crate::map::resources::Camera3dCoords>,
+    camera3dcoords: Res<crate::map::resources::Camera3dCoords>,
 ) {
     info!("camera3dbundle");
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_xyz(0.50, 0.50, 9.).looking_at(Vec3::ZERO, Vec3::Z),
-
+            transform: Transform::from_xyz(
+                camera3dcoords.0.x,
+                camera3dcoords.0.y,
+                camera3dcoords.0.z,
+            )
+            .looking_at(Vec3::ZERO, Vec3::Z),
+            // projection: Projection::from(OrthographicProjection { ..default() }),
             ..default()
         },
         crate::map::entities::MapCamera3d,
@@ -94,6 +122,15 @@ pub fn camera3dbundle(
     ));
 }
 
+/*
+ * For UI, Bevy follows the same convention as most other UI toolkits, the Web, etc.
+ * The origin is at the top left corner of the screen
+ * The Y axis points downwards
+ * X goes from 0.0 (left screen edge) to the number of screen pixels (right screen edge)
+ * Y goes from 0.0 (top screen edge) to the number of screen pixels (bottom screen edge)
+ * The units represent logical (compensated for DPI scaling) screen pixels.
+ * UI layout flows from top to bottom, similar to a web page.
+ */
 pub fn map_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -281,33 +318,43 @@ pub fn add_map(
         }
 
         crate::MyAppState::Map3D => {
-            commands.spawn(PbrBundle {
-                mesh: meshes.add(Circle::new(4.0)),
-                material: materials.add(Color::WHITE),
-                transform: Transform::from_rotation(Quat::from_rotation_z(
-                    -std::f32::consts::FRAC_PI_2,
-                )),
+            commands.spawn((
+                PbrBundle {
+                    mesh: meshes.add(Circle::new(4.0)),
+                    material: materials.add(Color::WHITE),
+                    transform: Transform::from_rotation(Quat::from_rotation_z(
+                        std::f32::consts::FRAC_PI_2,
+                    )),
+                    ..default()
+                },
+                crate::map::entities::MapMenu,
+            ));
+
+            commands.spawn((
+                PbrBundle {
+                    mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
+                    material: materials.add(Color::rgb_u8(124, 144, 255)),
+                    transform: Transform::from_xyz(0.0, 0., 1.0),
+                    ..default()
+                },
+                crate::map::entities::MapMenu,
+            ));
+            commands.spawn(PointLightBundle {
+                point_light: PointLight {
+                    shadows_enabled: true,
+                    ..default()
+                },
+                transform: Transform::from_xyz(4.0, 4.0, 8.0),
                 ..default()
             });
-            commands.spawn(PbrBundle {
-                mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-                material: materials.add(Color::rgb_u8(124, 144, 255)),
-                transform: Transform::from_xyz(0.0, 0., 1.0),
-                ..default()
-            });
-            // commands.spawn(PointLightBundle {
-            //     point_light: PointLight {
-            //         shadows_enabled: true,
-            //         ..default()
-            //     },
-            //     transform: Transform::from_xyz(4.0, 8.0, 4.0),
-            //     ..default()
-            // });
         }
         _ => (),
     }
 }
 
+/*
+ * The cursor position and any other window (screen-space) coordinates follow the same conventions as UI.
+ */
 pub fn map2d_scale_wander(
     mut query_camera_projection: Query<
         &mut OrthographicProjection,
@@ -379,34 +426,44 @@ pub fn map2d_scale_wander(
 }
 
 pub fn map3d_scale_wander(
-    // mut query_camera3d_projection: Query<&mut Projection, With<crate::map::entities::MapCamera3d>>,
-    mut query_camera3d_transform: Query<
-        &mut Transform,
-        (
-            With<crate::map::entities::MapCamera3d>,
-            Without<crate::map::entities::MapCamera2d>,
-        ),
-    >,
+    mut query_camera3d_projection: Query<&mut Projection, With<crate::map::entities::MapCamera3d>>,
+
     buttons: Res<ButtonInput<MouseButton>>,
     mut scroll_evr: EventReader<bevy::input::mouse::MouseWheel>,
     q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
     mut mouse_coords: ResMut<crate::map::resources::MouseCoords>,
     // mut map_info: ResMut<crate::map::resources::MapInfo>,
 ) {
-    /*
-     * Do not use the transform scale to "zoom" a camera!
-     * It just stretches the image, which is not "zooming".
-     * It might also cause other issues and incompatibilities. Use the projection to zoom.
-     * For an orthographic projection, change the scale. For a perspective projection, change the FOV.
-     */
     for ev in scroll_evr.read() {
         match ev.unit {
             bevy::input::mouse::MouseScrollUnit::Line => {
-                // if ev.y > 0. && projection.scale > 0.8 {
-                //     projection.scale /= 1.25;
-                // } else if ev.y < 0. && projection.scale < 8. {
-                //     projection.scale *= 1.25;
-                // }
+                /*
+                 * Do not use the transform scale to "zoom" a camera!
+                 * It just stretches the image, which is not "zooming".
+                 * It might also cause other issues and incompatibilities. Use the projection to zoom.
+                 * For an orthographic projection, change the scale. For a perspective projection, change the FOV.
+                 */
+                let camera3d_projection = query_camera3d_projection.single_mut().into_inner();
+                match camera3d_projection {
+                    // 3D cameras can use either a Perspective or an Orthographic projection.
+                    // Perspective is the default, and most common, choice.
+                    Projection::Perspective(persp) => {
+                        if ev.y > 0. && persp.fov > 0.5 {
+                            // we have a perspective projection
+                            persp.fov /= 1.25;
+                        } else if ev.y < 0. && persp.fov < 1.5 {
+                            persp.fov *= 1.25;
+                        }
+                    }
+                    Projection::Orthographic(ortho) => {
+                        if ev.y > 0. && ortho.scale > 0.5 {
+                            // we have an orthographic projection
+                            ortho.scale /= 1.25; // zoom in
+                        } else if ev.y < 0. && ortho.scale < 1.5 {
+                            ortho.scale *= 1.25; // zoom out
+                        }
+                    }
+                }
             }
             bevy::input::mouse::MouseScrollUnit::Pixel => {
                 // println!(
@@ -417,7 +474,6 @@ pub fn map3d_scale_wander(
             }
         }
     }
-    let mut transform = query_camera3d_transform.single_mut();
     if buttons.just_pressed(MouseButton::Left) {
         if let Some(position) = q_windows.single().cursor_position() {
             mouse_coords.pre_x = position.x;
@@ -428,22 +484,10 @@ pub fn map3d_scale_wander(
     }
     if buttons.just_released(MouseButton::Left) {
         if let Some(position) = q_windows.single().cursor_position() {
-            if position.x > mouse_coords.pre_x && position.y > mouse_coords.pre_y {
-                transform.translation.x -= position.x - mouse_coords.pre_x;
-                transform.translation.y += position.y - mouse_coords.pre_y;
-            }
-            if position.x > mouse_coords.pre_x && position.y < mouse_coords.pre_y {
-                transform.translation.x -= position.x - mouse_coords.pre_x;
-                transform.translation.y -= mouse_coords.pre_y - position.y;
-            }
-            if position.x < mouse_coords.pre_x && position.y > mouse_coords.pre_y {
-                transform.translation.x += mouse_coords.pre_x - position.x;
-                transform.translation.y += position.y - mouse_coords.pre_y;
-            }
-            if position.x < mouse_coords.pre_x && position.y < mouse_coords.pre_y {
-                transform.translation.x += mouse_coords.pre_x - position.x;
-                transform.translation.y -= mouse_coords.pre_y - position.y;
-            }
+            if position.x > mouse_coords.pre_x && position.y > mouse_coords.pre_y {}
+            if position.x > mouse_coords.pre_x && position.y < mouse_coords.pre_y {}
+            if position.x < mouse_coords.pre_x && position.y > mouse_coords.pre_y {}
+            if position.x < mouse_coords.pre_x && position.y < mouse_coords.pre_y {}
         } else {
             info!("Cursor is not in the game window.");
         }
