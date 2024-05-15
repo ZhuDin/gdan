@@ -444,7 +444,7 @@ pub fn back_main_menu(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut next_state: ResMut<NextState<crate::MyAppState>>,
 ) {
-    if keyboard.pressed(KeyCode::KeyB) {
+    if keyboard.just_pressed(KeyCode::KeyB) {
         next_state.set(crate::MyAppState::MainMenu);
         info!("back_main_menu -> MyAppState::MainMenu");
     }

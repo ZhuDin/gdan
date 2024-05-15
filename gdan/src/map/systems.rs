@@ -2,15 +2,14 @@
 
 use bevy::prelude::*;
 
-/*
- * accessing resources using Res/ResMut
- * accessing components of entities using queries (Query)
- * creating/destroying entities, components, and resources using Commands (Commands)
- * sending/receiving events using EventWriter/EventReader
- */
 pub fn init_map(mut commands: Commands) {
     info!("init_map");
-
+    /*
+     * accessing resources using Res/ResMut
+     * accessing components of entities using queries (Query)
+     * creating/destroying entities, components, and resources using Commands (Commands)
+     * sending/receiving events using EventWriter/EventReader
+     */
     let label_x: u32 = 3;
     let label_y: u32 = 4;
 
@@ -84,28 +83,28 @@ pub fn camera2dbundle(
     ));
 }
 
-/*
- * Bevy uses a right-handed Y-up coordinate system for the game world.
- * The coordinate system is the same for 3D and 2D, for consistency.
- * It is easiest to explain in terms of 2D:
- * The X axis goes from left to right (+X points right).
- * The Y axis goes from bottom to top (+Y points up).
- * The Z axis goes from far to near (+Z points towards you, out of the screen).
- * For 2D, the origin (X=0.0; Y=0.0) is at the center of the screen by default.
- * When you are working with 2D sprites, you can put the background on Z=0.0,
- * and place other sprites at increasing positive Z coordinates to layer them on top.
- *
- * In 3D, the axes are oriented the same way:
- * Y points up
- * The forward direction is -Z
- * This is a right-handed coordinate system.
- * You can use the fingers of your right hand to visualize the 3 axes: thumb=X, index=Y, middle=Z.
- */
 pub fn camera3dbundle(
     mut commands: Commands,
     camera3dcoords: Res<crate::map::resources::Camera3dCoords>,
 ) {
     info!("camera3dbundle");
+    /*
+     * Bevy uses a right-handed Y-up coordinate system for the game world.
+     * The coordinate system is the same for 3D and 2D, for consistency.
+     * It is easiest to explain in terms of 2D:
+     * The X axis goes from left to right (+X points right).
+     * The Y axis goes from bottom to top (+Y points up).
+     * The Z axis goes from far to near (+Z points towards you, out of the screen).
+     * For 2D, the origin (X=0.0; Y=0.0) is at the center of the screen by default.
+     * When you are working with 2D sprites, you can put the background on Z=0.0,
+     * and place other sprites at increasing positive Z coordinates to layer them on top.
+     *
+     * In 3D, the axes are oriented the same way:
+     * Y points up
+     * The forward direction is -Z
+     * This is a right-handed coordinate system.
+     * You can use the fingers of your right hand to visualize the 3 axes: thumb=X, index=Y, middle=Z.
+     */
     commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(
@@ -122,21 +121,21 @@ pub fn camera3dbundle(
     ));
 }
 
-/*
- * For UI, Bevy follows the same convention as most other UI toolkits, the Web, etc.
- * The origin is at the top left corner of the screen
- * The Y axis points downwards
- * X goes from 0.0 (left screen edge) to the number of screen pixels (right screen edge)
- * Y goes from 0.0 (top screen edge) to the number of screen pixels (bottom screen edge)
- * The units represent logical (compensated for DPI scaling) screen pixels.
- * UI layout flows from top to bottom, similar to a web page.
- */
 pub fn map_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     state: Res<State<crate::MyAppState>>,
 ) {
     info!("map_menu");
+    /*
+     * For UI, Bevy follows the same convention as most other UI toolkits, the Web, etc.
+     * The origin is at the top left corner of the screen
+     * The Y axis points downwards
+     * X goes from 0.0 (left screen edge) to the number of screen pixels (right screen edge)
+     * Y goes from 0.0 (top screen edge) to the number of screen pixels (bottom screen edge)
+     * The units represent logical (compensated for DPI scaling) screen pixels.
+     * UI layout flows from top to bottom, similar to a web page.
+     */
     match state.get() {
         crate::MyAppState::MapMenu => {
             commands.spawn((
@@ -352,9 +351,6 @@ pub fn add_map(
     }
 }
 
-/*
- * The cursor position and any other window (screen-space) coordinates follow the same conventions as UI.
- */
 pub fn map2d_scale_wander(
     mut query_camera_projection: Query<
         &mut OrthographicProjection,
@@ -373,6 +369,9 @@ pub fn map2d_scale_wander(
     mut mouse_coords: ResMut<crate::map::resources::MouseCoords>,
     // mut map_info: ResMut<crate::map::resources::MapInfo>,
 ) {
+    /*
+     * The cursor position and any other window (screen-space) coordinates follow the same conventions as UI.
+     */
     let mut projection = query_camera_projection.single_mut();
     for ev in scroll_evr.read() {
         match ev.unit {
@@ -427,7 +426,8 @@ pub fn map2d_scale_wander(
 
 pub fn map3d_scale_wander(
     mut query_camera3d_projection: Query<&mut Projection, With<crate::map::entities::MapCamera3d>>,
-
+    mut query_camera3d_transform: Query<&mut Transform, With<crate::map::entities::MapCamera3d>>,
+    keyboard: Res<ButtonInput<KeyCode>>,
     buttons: Res<ButtonInput<MouseButton>>,
     mut scroll_evr: EventReader<bevy::input::mouse::MouseWheel>,
     q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
@@ -474,7 +474,7 @@ pub fn map3d_scale_wander(
             }
         }
     }
-    if buttons.just_pressed(MouseButton::Left) {
+    if buttons.just_pressed(MouseButton::Right) {
         if let Some(position) = q_windows.single().cursor_position() {
             mouse_coords.pre_x = position.x;
             mouse_coords.pre_y = position.y;
@@ -482,7 +482,7 @@ pub fn map3d_scale_wander(
             info!("Cursor is not in the game window.");
         }
     }
-    if buttons.just_released(MouseButton::Left) {
+    if buttons.just_released(MouseButton::Right) {
         if let Some(position) = q_windows.single().cursor_position() {
             if position.x > mouse_coords.pre_x && position.y > mouse_coords.pre_y {}
             if position.x > mouse_coords.pre_x && position.y < mouse_coords.pre_y {}
@@ -491,6 +491,22 @@ pub fn map3d_scale_wander(
         } else {
             info!("Cursor is not in the game window.");
         }
+    }
+    if keyboard.just_pressed(KeyCode::ArrowUp) {
+        let mut camera3d_transform = query_camera3d_transform.single_mut();
+        camera3d_transform.translation.x += 1.;
+    }
+    if keyboard.just_pressed(KeyCode::ArrowDown) {
+        let mut camera3d_transform = query_camera3d_transform.single_mut();
+        camera3d_transform.translation.x -= 1.;
+    }
+    if keyboard.just_pressed(KeyCode::ArrowLeft) {
+        let mut camera3d_transform = query_camera3d_transform.single_mut();
+        camera3d_transform.translation.y += 1.;
+    }
+    if keyboard.just_pressed(KeyCode::ArrowRight) {
+        let mut camera3d_transform = query_camera3d_transform.single_mut();
+        camera3d_transform.translation.y -= 1.;
     }
 }
 
