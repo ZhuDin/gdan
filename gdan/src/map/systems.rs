@@ -37,7 +37,7 @@ pub fn init_map(mut commands: Commands) {
         // label_x as f32 / 2. * unit_x - unit_x / 4.,
         // label_y as f32 / 2. * unit_y - unit_y,
         // -2.5, 4.5, 9.0,
-        0., 0., 10.,
+        0., 6., 8.,
     )));
 
     commands.insert_resource(crate::map::resources::Camera3dProjection {
@@ -112,7 +112,7 @@ pub fn camera3dbundle(
                 camera3dcoords.0.y,
                 camera3dcoords.0.z,
             )
-            .looking_at(Vec3::ZERO, Vec3::Z),
+            .looking_at(Vec3::ZERO, Vec3::Y),
             // projection: Projection::from(OrthographicProjection { ..default() }),
             ..default()
         },
@@ -317,35 +317,64 @@ pub fn add_map(
         }
 
         crate::MyAppState::Map3D => {
+            // plane
             commands.spawn((
                 PbrBundle {
-                    mesh: meshes.add(Circle::new(4.0)),
-                    material: materials.add(Color::WHITE),
-                    transform: Transform::from_rotation(Quat::from_rotation_z(
-                        std::f32::consts::FRAC_PI_2,
-                    )),
+                    mesh: meshes.add(Plane3d::default().mesh().size(5.0, 5.0)),
+                    material: materials.add(Color::rgb(0.3, 0.5, 0.3)),
                     ..default()
                 },
                 crate::map::entities::MapMenu,
             ));
 
+            // cube
             commands.spawn((
                 PbrBundle {
                     mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-                    material: materials.add(Color::rgb_u8(124, 144, 255)),
-                    transform: Transform::from_xyz(0.0, 0., 1.0),
+                    material: materials.add(Color::rgb(0.8, 0.7, 0.6)),
+                    transform: Transform::from_xyz(0.0, 0.5, 0.0),
                     ..default()
                 },
                 crate::map::entities::MapMenu,
             ));
-            commands.spawn(PointLightBundle {
-                point_light: PointLight {
-                    shadows_enabled: true,
+
+            // light
+            commands.spawn((
+                PointLightBundle {
+                    point_light: PointLight {
+                        shadows_enabled: true,
+                        ..default()
+                    },
+                    transform: Transform::from_xyz(4.0, 8.0, 4.0),
                     ..default()
                 },
-                transform: Transform::from_xyz(4.0, 4.0, 8.0),
-                ..default()
-            });
+                crate::map::entities::MapMenu,
+            ));
+
+            // example instructions
+            commands.spawn((
+                TextBundle::from_section(
+                    "Press 'D' to toggle drawing gizmos on top of everything else in the scene\n\
+            Press 'P' to toggle perspective for line gizmos\n\
+            Hold 'Left' or 'Right' to change the line width of straight gizmos\n\
+            Hold 'Up' or 'Down' to change the line width of round gizmos\n\
+            Press '1' or '2' to toggle the visibility of straight gizmos or round gizmos\n\
+            Press 'A' to show all AABB boxes\n\
+            Press 'K' or 'J' to cycle through primitives rendered with gizmos\n\
+            Press 'H' or 'L' to decrease/increase the amount of segments in the primitives",
+                    TextStyle {
+                        font_size: 20.,
+                        ..default()
+                    },
+                )
+                .with_style(Style {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(8.0),
+                    left: Val::Px(8.0),
+                    ..default()
+                }),
+                crate::map::entities::MapMenu,
+            ));
         }
         _ => (),
     }
@@ -427,6 +456,7 @@ pub fn map2d_scale_wander(
 pub fn map3d_scale_wander(
     mut query_camera3d_projection: Query<&mut Projection, With<crate::map::entities::MapCamera3d>>,
     mut query_camera3d_transform: Query<&mut Transform, With<crate::map::entities::MapCamera3d>>,
+    time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     buttons: Res<ButtonInput<MouseButton>>,
     mut scroll_evr: EventReader<bevy::input::mouse::MouseWheel>,
@@ -434,6 +464,9 @@ pub fn map3d_scale_wander(
     mut mouse_coords: ResMut<crate::map::resources::MouseCoords>,
     // mut map_info: ResMut<crate::map::resources::MapInfo>,
 ) {
+    let mut transform = query_camera3d_transform.single_mut();
+    transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(time.delta_seconds() / 2.));
+
     for ev in scroll_evr.read() {
         match ev.unit {
             bevy::input::mouse::MouseScrollUnit::Line => {
@@ -494,20 +527,69 @@ pub fn map3d_scale_wander(
     }
     if keyboard.just_pressed(KeyCode::ArrowUp) {
         let mut camera3d_transform = query_camera3d_transform.single_mut();
-        camera3d_transform.translation.x += 1.;
+        camera3d_transform.translation.z -= 1.;
     }
     if keyboard.just_pressed(KeyCode::ArrowDown) {
         let mut camera3d_transform = query_camera3d_transform.single_mut();
-        camera3d_transform.translation.x -= 1.;
+        camera3d_transform.translation.z += 1.;
     }
     if keyboard.just_pressed(KeyCode::ArrowLeft) {
         let mut camera3d_transform = query_camera3d_transform.single_mut();
-        camera3d_transform.translation.y += 1.;
+        camera3d_transform.translation.x -= 1.;
     }
     if keyboard.just_pressed(KeyCode::ArrowRight) {
         let mut camera3d_transform = query_camera3d_transform.single_mut();
-        camera3d_transform.translation.y -= 1.;
+        camera3d_transform.translation.x += 1.;
     }
+}
+
+pub fn draw_line_collection(
+    mut gizmos: Gizmos,
+    mut my_gizmos: Gizmos<crate::MyRoundGizmos>,
+    time: Res<Time>,
+) {
+    gizmos.cuboid(
+        Transform::from_translation(Vec3::Y * 0.5).with_scale(Vec3::splat(1.25)),
+        Color::BLACK,
+    );
+    gizmos.rect(
+        Vec3::new(time.elapsed_seconds().cos() * 2.5, 1., 0.),
+        Quat::from_rotation_y(std::f32::consts::PI / 2.),
+        Vec2::splat(2.),
+        Color::GREEN,
+    );
+
+    my_gizmos.sphere(Vec3::new(1., 0.5, 0.), Quat::IDENTITY, 0.5, Color::RED);
+
+    for y in [0., 0.5, 1.] {
+        gizmos.ray(
+            Vec3::new(1., y, 0.),
+            Vec3::new(-3., (time.elapsed_seconds() * 3.).sin(), 0.),
+            Color::BLUE,
+        );
+    }
+
+    my_gizmos
+        .arc_3d(
+            180.0_f32.to_radians(),
+            0.2,
+            Vec3::ONE,
+            Quat::from_rotation_arc(Vec3::Y, Vec3::ONE.normalize()),
+            Color::ORANGE,
+        )
+        .segments(10);
+
+    // Circles have 32 line-segments by default.
+    my_gizmos.circle(Vec3::ZERO, Direction3d::Y, 3., Color::BLACK);
+    // You may want to increase this for larger circles or spheres.
+    my_gizmos
+        .circle(Vec3::ZERO, Direction3d::Y, 3.1, Color::NAVY)
+        .segments(64);
+    my_gizmos
+        .sphere(Vec3::ZERO, Quat::IDENTITY, 3.2, Color::BLACK)
+        .circle_segments(64);
+
+    gizmos.arrow(Vec3::ZERO, Vec3::ONE * 1.5, Color::YELLOW);
 }
 
 pub fn despawn_map_menu(

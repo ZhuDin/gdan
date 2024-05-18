@@ -6,11 +6,7 @@ pub fn camera2dbundle(mut commands: Commands) {
     commands.spawn((Camera2dBundle::default(), crate::rule::entities::RuleMenu));
 }
 
-pub fn draw_rule(
-    mut gizmos: Gizmos,
-    mut my_gizmos: Gizmos<crate::rule::entities::MyRoundGizmos>,
-    time: Res<Time>,
-) {
+pub fn draw_rule(mut gizmos: Gizmos, mut my_gizmos: Gizmos<crate::MyRoundGizmos>, time: Res<Time>) {
     let sin = time.elapsed_seconds().sin() * 50.;
     gizmos.line_2d(Vec2::Y * -sin, Vec2::splat(-80.), Color::RED);
     gizmos.ray_2d(Vec2::Y * sin, Vec2::splat(80.), Color::GREEN);

@@ -9,6 +9,10 @@ use bevy::prelude::*;
 #[derive(bevy::ecs::component::Component)]
 pub struct MainMenu;
 
+// We can create our own gizmo config group!
+#[derive(Default, Reflect, GizmoConfigGroup)]
+pub struct MyRoundGizmos {}
+
 #[derive(bevy::ecs::schedule::States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MyAppState {
     #[default]
@@ -48,7 +52,7 @@ fn main() {
         // Or use the default (if the type impls Default):
         .init_state::<MyAppState>()
         .init_state::<crate::game::entities::GameState>()
-        .init_gizmo_group::<crate::rule::entities::MyRoundGizmos>()
+        .init_gizmo_group::<crate::MyRoundGizmos>()
         // .add_systems(Startup, ().chain())
         .add_systems(Update, close_on_esc)
         /*
@@ -112,6 +116,7 @@ fn main() {
                 back_main_menu,
                 crate::map::systems::map_menu_system,
                 crate::map::systems::map3d_scale_wander,
+                crate::map::systems::draw_line_collection,
             )
                 .chain()
                 .run_if(in_state(MyAppState::Map3D)),
