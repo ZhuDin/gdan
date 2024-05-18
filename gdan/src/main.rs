@@ -20,6 +20,7 @@ pub enum MyAppState {
     MapMenu,
     Map3D,
     OperMenu,
+    Oper3D,
     RuleMenu,
     // SceneMenu,
     GameMenu,
@@ -138,12 +139,37 @@ fn main() {
         )
         .add_systems(
             Update,
-            (back_main_menu,)
+            (back_main_menu, crate::oper::systems::oper_menu_system)
                 .chain()
                 .run_if(in_state(MyAppState::OperMenu)),
         )
         .add_systems(
             OnExit(MyAppState::OperMenu),
+            (crate::oper::systems::despawn_oper_menu,),
+        )
+        /*
+         * Oper3D
+         */
+        .add_systems(
+            OnEnter(MyAppState::Oper3D),
+            (
+                crate::oper::systems::camera3dbundle,
+                crate::oper::systems::oper_setup,
+            )
+                .chain(),
+        )
+        .add_systems(
+            Update,
+            (
+                back_main_menu,
+                crate::oper::systems::oper_menu_system,
+                crate::oper::systems::oper3d_scale_wander,
+            )
+                .chain()
+                .run_if(in_state(MyAppState::Oper3D)),
+        )
+        .add_systems(
+            OnExit(MyAppState::Oper3D),
             (crate::oper::systems::despawn_oper_menu,),
         )
         /*
