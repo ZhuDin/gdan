@@ -15,8 +15,8 @@ pub struct MyRoundGizmos {}
 
 #[derive(bevy::ecs::schedule::States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MyAppState {
-    #[default]
     MainMenu,
+    #[default]
     MapMenu,
     Map3D,
     OperMenu,
@@ -43,7 +43,7 @@ fn main() {
      * The runner interprets the schedule to control the broad execution strategy.
      */
     App::new()
-        .add_plugins(bevy::DefaultPlugins)
+        .add_plugins(bevy::DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(crate::map::resources::GreetTimer(
             bevy::time::Timer::from_seconds(5.0, bevy::time::TimerMode::Repeating),
         ))
@@ -439,19 +439,19 @@ fn w_game_system(
                     MyAppState::MainMenu => {
                         if text.sections[0].value == "Map".to_string() {
                             next_state.set(MyAppState::MapMenu);
-                            info!("w_game_system -> MyAppState::MapMenu");
+                            info!("AppState::MapMenu");
                         }
                         if text.sections[0].value == "Oper".to_string() {
                             next_state.set(MyAppState::OperMenu);
-                            info!("w_game_system -> MyAppState::OperMenu");
+                            info!("AppState::OperMenu");
                         }
                         if text.sections[0].value == "Rule".to_string() {
                             next_state.set(MyAppState::RuleMenu);
-                            info!("w_game_system -> MyAppState::RuleMenu");
+                            info!("AppState::RuleMenu");
                         }
                         if text.sections[0].value == "Game".to_string() {
                             next_state.set(MyAppState::GameMenu);
-                            info!("w_game_system -> MyAppState::GameMenu");
+                            info!("AppState::GameMenu");
                         }
                     }
                     _ => (),
@@ -477,7 +477,7 @@ pub fn back_main_menu(
 ) {
     if keyboard.just_pressed(KeyCode::KeyB) {
         next_state.set(crate::MyAppState::MainMenu);
-        info!("back_main_menu -> MyAppState::MainMenu");
+        info!("AppState::MainMenu");
     }
 }
 

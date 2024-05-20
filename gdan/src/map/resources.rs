@@ -39,3 +39,11 @@ pub struct MouseCoords {
     pub x: f32,
     pub y: f32,
 }
+
+#[derive(bevy::ecs::system::Resource, Default)]
+pub struct Circle001Coords {
+    pub pre_x: f32,
+    pub pre_y: f32,
+    pub x: f32,
+    pub y: f32,
+}

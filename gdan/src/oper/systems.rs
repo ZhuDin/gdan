@@ -234,7 +234,7 @@ pub fn oper_menu_system(
                 crate::MyAppState::OperMenu => {
                     if text.sections[0].value == "3D".to_string() {
                         next_state.set(crate::MyAppState::Oper3D);
-                        info!("w_game_system -> AppState::Oper3D");
+                        info!("AppState::Oper3D");
                     }
                 }
                 _ => (),

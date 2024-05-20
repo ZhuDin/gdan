@@ -10,14 +10,14 @@ pub fn init_map(mut commands: Commands) {
      * creating/destroying entities, components, and resources using Commands (Commands)
      * sending/receiving events using EventWriter/EventReader
      */
-    let label_x: u32 = 3;
-    let label_y: u32 = 4;
+    let label_x: u32 = 1;
+    let label_y: u32 = 1;
 
-    let unit_x: f32 = 1440.;
-    let unit_y: f32 = 810.;
+    let unit_x: f32 = 5040.;
+    let unit_y: f32 = 3600.;
 
     commands.insert_resource(crate::map::resources::MapInfo {
-        scale: 5.,
+        scale: 1.,
         unit_x,
         unit_y,
         label_x,
@@ -28,10 +28,7 @@ pub fn init_map(mut commands: Commands) {
         meter_per_pixel: 10. / 72.,
     });
 
-    commands.insert_resource(crate::map::resources::Camera2dCoords(Vec2::new(
-        label_x as f32 / 2. * unit_x - unit_x / 4.,
-        label_y as f32 / 2. * unit_y - unit_y,
-    )));
+    commands.insert_resource(crate::map::resources::Camera2dCoords(Vec2::new(0., 0.)));
 
     commands.insert_resource(crate::map::resources::Camera3dCoords(Vec3::new(
         // label_x as f32 / 2. * unit_x - unit_x / 4.,
@@ -46,6 +43,13 @@ pub fn init_map(mut commands: Commands) {
     });
 
     commands.insert_resource(crate::map::resources::MouseCoords {
+        pre_x: 0.,
+        pre_y: 0.,
+        x: 0.,
+        y: 0.,
+    });
+
+    commands.insert_resource(crate::map::resources::Circle001Coords {
         pre_x: 0.,
         pre_y: 0.,
         x: 0.,
@@ -224,8 +228,12 @@ pub fn map_menu_system(
         (Changed<Interaction>, With<Button>),
     >,
     state: Res<State<crate::MyAppState>>,
+    windows: Query<&Window>,
+    buttons: Res<ButtonInput<MouseButton>>,
     mut next_state: ResMut<NextState<crate::MyAppState>>,
     mut text_query: Query<&mut Text>,
+    mut gizmos: Gizmos,
+    circle_001_coords: Res<crate::map::resources::Circle001Coords>,
 ) {
     for (interaction, mut color, mut border_color, children) in &mut interaction_query {
         let text = text_query.get_mut(children[0]).unwrap();
@@ -234,7 +242,7 @@ pub fn map_menu_system(
                 crate::MyAppState::MapMenu => {
                     if text.sections[0].value == "3D".to_string() {
                         next_state.set(crate::MyAppState::Map3D);
-                        info!("w_game_system -> MyAppState::Map3D");
+                        info!("AppState::Map3D");
                     }
                 }
                 _ => (),
@@ -251,6 +259,20 @@ pub fn map_menu_system(
             }
         }
     }
+    if buttons.just_pressed(MouseButton::Left) {
+        let Some(cursor_position) = windows.single().cursor_position() else {
+            return;
+        };
+        info!("({},{})", cursor_position.x, cursor_position.y);
+    }
+    gizmos.circle_2d(
+        bevy::prelude::Vec2 {
+            x: circle_001_coords.x,
+            y: circle_001_coords.y,
+        },
+        10.,
+        Color::WHITE,
+    );
 }
 
 pub fn add_map(
@@ -259,61 +281,59 @@ pub fn add_map(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     state: Res<State<crate::MyAppState>>,
-    map_info: Res<crate::map::resources::MapInfo>,
+    // map_info: Res<crate::map::resources::MapInfo>,
 ) {
     info!("add_map");
     match state.get() {
         crate::MyAppState::MapMenu => {
-            for x in 0..map_info.label_x {
-                for y in 0..map_info.label_y {
-                    commands.spawn((
-                        SpriteBundle {
-                            texture: asset_server.load(
-                                "wg/ncly/level21/".to_string()
-                                    + (x + 1).to_string().as_str()
-                                    + "-"
-                                    + (y + 1).to_string().as_str()
-                                    + ".png",
-                            ),
-                            transform: Transform::from_xyz(
-                                x as f32 * map_info.unit_x,
-                                y as f32 * map_info.unit_y,
-                                0.,
-                            ),
-                            ..default()
-                        },
-                        crate::map::entities::MapNC,
-                        crate::map::entities::MapMenu,
-                    ));
-                }
-            }
-
+            // for x in 0..map_info.label_x {
+            // for y in 0..map_info.label_y {
             commands.spawn((
                 SpriteBundle {
-                    texture: asset_server.load("wg/ncly/level21/hexagon.png"),
-
-                    transform: Transform {
-                        translation: Vec3 {
-                            x: map_info.label_x as f32 / 2. * map_info.unit_x
-                                - map_info.unit_x / 2.,
-                            y: map_info.label_y as f32 / 2. * map_info.unit_y
-                                - map_info.unit_y / 2.,
-                            z: 1.,
-                        },
-                        scale: Vec3 {
-                            x: 0.378,
-                            y: 0.378,
-                            z: 0.,
-                        },
-                        ..default()
-                    },
+                    texture: asset_server.load(
+                        // "wg/ncly/level21/".to_string()
+                        //     + (x + 1).to_string().as_str()
+                        //     + "-"
+                        //     + (y + 1).to_string().as_str()
+                        //     + ".png",
+                        "wg/mlx/1-5040p-3600p.png",
+                        // "branding/bevy_bird_dark.png",
+                    ),
 
                     ..default()
                 },
-                crate::map::entities::MapHexagon,
                 crate::map::entities::MapNC,
                 crate::map::entities::MapMenu,
             ));
+            // }
+            // }
+
+            // commands.spawn((
+            //     SpriteBundle {
+            //         texture: asset_server.load("wg/ncly/level21/hexagon.png"),
+
+            //         transform: Transform {
+            //             translation: Vec3 {
+            //                 x: map_info.label_x as f32 / 2. * map_info.unit_x
+            //                     - map_info.unit_x / 2.,
+            //                 y: map_info.label_y as f32 / 2. * map_info.unit_y
+            //                     - map_info.unit_y / 2.,
+            //                 z: 1.,
+            //             },
+            //             scale: Vec3 {
+            //                 x: 0.378,
+            //                 y: 0.378,
+            //                 z: 0.,
+            //             },
+            //             ..default()
+            //         },
+
+            //         ..default()
+            //     },
+            //     crate::map::entities::MapHexagon,
+            //     crate::map::entities::MapNC,
+            //     crate::map::entities::MapMenu,
+            // ));
         }
 
         crate::MyAppState::Map3D => {
