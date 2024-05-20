@@ -281,7 +281,6 @@ pub fn add_map(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     state: Res<State<crate::MyAppState>>,
-    // map_info: Res<crate::map::resources::MapInfo>,
 ) {
     info!("add_map");
     match state.get() {
@@ -308,32 +307,28 @@ pub fn add_map(
             // }
             // }
 
-            // commands.spawn((
-            //     SpriteBundle {
-            //         texture: asset_server.load("wg/ncly/level21/hexagon.png"),
-
-            //         transform: Transform {
-            //             translation: Vec3 {
-            //                 x: map_info.label_x as f32 / 2. * map_info.unit_x
-            //                     - map_info.unit_x / 2.,
-            //                 y: map_info.label_y as f32 / 2. * map_info.unit_y
-            //                     - map_info.unit_y / 2.,
-            //                 z: 1.,
-            //             },
-            //             scale: Vec3 {
-            //                 x: 0.378,
-            //                 y: 0.378,
-            //                 z: 0.,
-            //             },
-            //             ..default()
-            //         },
-
-            //         ..default()
-            //     },
-            //     crate::map::entities::MapHexagon,
-            //     crate::map::entities::MapNC,
-            //     crate::map::entities::MapMenu,
-            // ));
+            commands.spawn((
+                SpriteBundle {
+                    texture: asset_server.load("wg/mlx/hexagon.png"),
+                    transform: Transform {
+                        translation: Vec3 {
+                            x: 0.,
+                            y: 0.,
+                            z: 1.,
+                        },
+                        scale: Vec3 {
+                            x: 0.42,
+                            y: 0.42,
+                            z: 0.,
+                        },
+                        ..default()
+                    },
+                    ..default()
+                },
+                crate::map::entities::MapHexagon,
+                crate::map::entities::MapNC,
+                crate::map::entities::MapMenu,
+            ));
         }
 
         crate::MyAppState::Map3D => {
@@ -412,11 +407,11 @@ pub fn map2d_scale_wander(
             Without<crate::map::entities::MapCamera3d>,
         ),
     >,
-    buttons: Res<ButtonInput<MouseButton>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut scroll_evr: EventReader<bevy::input::mouse::MouseWheel>,
-    q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
-    mut mouse_coords: ResMut<crate::map::resources::MouseCoords>,
-    // mut map_info: ResMut<crate::map::resources::MapInfo>,
+    // q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
+    // mouse_coords: ResMut<crate::map::resources::MouseCoords>,
+    map_info: ResMut<crate::map::resources::MapInfo>,
 ) {
     /*
      * The cursor position and any other window (screen-space) coordinates follow the same conventions as UI.
@@ -425,9 +420,9 @@ pub fn map2d_scale_wander(
     for ev in scroll_evr.read() {
         match ev.unit {
             bevy::input::mouse::MouseScrollUnit::Line => {
-                if ev.y > 0. && projection.scale > 0.8 {
+                if ev.y > 0. && projection.scale > 1. {
                     projection.scale /= 1.25;
-                } else if ev.y < 0. && projection.scale < 8. {
+                } else if ev.y < 0. && projection.scale < 5. {
                     projection.scale *= 1.25;
                 }
             }
@@ -441,35 +436,28 @@ pub fn map2d_scale_wander(
         }
     }
     let mut transform = query_camera2d_transform.single_mut();
-    if buttons.just_pressed(MouseButton::Left) {
-        if let Some(position) = q_windows.single().cursor_position() {
-            mouse_coords.pre_x = position.x;
-            mouse_coords.pre_y = position.y;
-        } else {
-            info!("Cursor is not in the game window.");
-        }
+    if (keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp))
+        && transform.translation.y < map_info.unit_y * 0.55
+    {
+        transform.translation.y += 10.;
     }
-    if buttons.just_released(MouseButton::Left) {
-        if let Some(position) = q_windows.single().cursor_position() {
-            if position.x > mouse_coords.pre_x && position.y > mouse_coords.pre_y {
-                transform.translation.x -= position.x - mouse_coords.pre_x;
-                transform.translation.y += position.y - mouse_coords.pre_y;
-            }
-            if position.x > mouse_coords.pre_x && position.y < mouse_coords.pre_y {
-                transform.translation.x -= position.x - mouse_coords.pre_x;
-                transform.translation.y -= mouse_coords.pre_y - position.y;
-            }
-            if position.x < mouse_coords.pre_x && position.y > mouse_coords.pre_y {
-                transform.translation.x += mouse_coords.pre_x - position.x;
-                transform.translation.y += position.y - mouse_coords.pre_y;
-            }
-            if position.x < mouse_coords.pre_x && position.y < mouse_coords.pre_y {
-                transform.translation.x += mouse_coords.pre_x - position.x;
-                transform.translation.y -= mouse_coords.pre_y - position.y;
-            }
-        } else {
-            info!("Cursor is not in the game window.");
-        }
+
+    if (keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown))
+        && transform.translation.y > -map_info.unit_y * 0.55
+    {
+        transform.translation.y -= 10.;
+    }
+
+    if (keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight))
+        && transform.translation.x < map_info.unit_x * 0.55
+    {
+        transform.translation.x += 10.;
+    }
+
+    if (keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft))
+        && transform.translation.x > -map_info.unit_x * 0.55
+    {
+        transform.translation.x -= 10.;
     }
 }
 
@@ -611,6 +599,8 @@ pub fn draw_line_collection(
 
     gizmos.arrow(Vec3::ZERO, Vec3::ONE * 1.5, Color::YELLOW);
 }
+
+pub fn add_oper() {}
 
 pub fn despawn_map_menu(
     query_enemy: Query<Entity, With<crate::map::entities::MapMenu>>,
