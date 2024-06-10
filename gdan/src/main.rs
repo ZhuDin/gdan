@@ -209,7 +209,11 @@ fn main() {
         )
         .add_systems(
             Update,
-            (back_main_menu, crate::rule::systems::draw_cursor)
+            (
+                back_main_menu,
+                crate::tools::camera3d_systems::projection3d_zoom,
+                crate::tools::camera3d_systems::transform_location,
+            )
                 .chain()
                 .run_if(in_state(MyAppState::Scene3D)),
         )
