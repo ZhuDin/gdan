@@ -3,6 +3,7 @@ pub mod map;
 pub mod oper;
 pub mod rule;
 pub mod scene;
+pub mod tools;
 
 use bevy::prelude::*;
 
@@ -16,13 +17,14 @@ pub struct MyRoundGizmos {}
 #[derive(bevy::ecs::schedule::States, Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MyAppState {
     MainMenu,
-    #[default]
     MapMenu,
     Map3D,
     OperMenu,
     Oper3D,
     RuleMenu,
-    // SceneMenu,
+    SceneMenu,
+    #[default]
+    Scene3D,
     GameMenu,
 }
 
@@ -82,7 +84,6 @@ fn main() {
                 crate::map::systems::camera2dbundle,
                 crate::map::systems::map_menu,
                 crate::map::systems::add_map,
-                crate::map::systems::add_oper,
             )
                 .chain(),
         )
@@ -90,8 +91,9 @@ fn main() {
             Update,
             (
                 back_main_menu,
-                crate::map::systems::map_menu_system,
+                crate::map::systems::draw_hexagon_2d,
                 crate::map::systems::map2d_scale_wander,
+                crate::map::systems::add_oper,
             )
                 .chain()
                 .run_if(in_state(MyAppState::MapMenu)),
@@ -192,6 +194,27 @@ fn main() {
         )
         .add_systems(
             OnExit(MyAppState::RuleMenu),
+            (crate::rule::systems::despawn_rule_menu,),
+        )
+        /*
+         * Scene3D
+         */
+        .add_systems(
+            OnEnter(MyAppState::Scene3D),
+            (
+                crate::scene::systems::camera3dbundle,
+                crate::scene::systems::show_map,
+            )
+                .chain(),
+        )
+        .add_systems(
+            Update,
+            (back_main_menu, crate::rule::systems::draw_cursor)
+                .chain()
+                .run_if(in_state(MyAppState::Scene3D)),
+        )
+        .add_systems(
+            OnExit(MyAppState::Scene3D),
             (crate::rule::systems::despawn_rule_menu,),
         )
         /*

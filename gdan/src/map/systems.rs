@@ -13,8 +13,8 @@ pub fn init_map(mut commands: Commands) {
     let label_x: u32 = 1;
     let label_y: u32 = 1;
 
-    let unit_x: f32 = 5040.;
-    let unit_y: f32 = 3600.;
+    let unit_x: f32 = 8819.;
+    let unit_y: f32 = 6299.;
 
     commands.insert_resource(crate::map::resources::MapInfo {
         scale: 1.,
@@ -60,13 +60,13 @@ pub fn init_map(mut commands: Commands) {
 pub fn camera2dbundle(
     mut commands: Commands,
     map_info: Res<crate::map::resources::MapInfo>,
-    camera2dcoords: Res<crate::map::resources::Camera2dCoords>,
+    // camera2dcoords: Res<crate::map::resources::Camera2dCoords>,
 ) {
     info!("camera2dbundle");
 
     commands.spawn((
         Camera2dBundle {
-            transform: Transform::from_xyz(camera2dcoords.0.x, camera2dcoords.0.y, 0.0),
+            transform: Transform::from_xyz(map_info.unit_x / 2., map_info.unit_y / 2., 100.0),
             projection: OrthographicProjection {
                 /*
                  * The projection contains the near and far values,
@@ -232,8 +232,6 @@ pub fn map_menu_system(
     buttons: Res<ButtonInput<MouseButton>>,
     mut next_state: ResMut<NextState<crate::MyAppState>>,
     mut text_query: Query<&mut Text>,
-    mut gizmos: Gizmos,
-    circle_001_coords: Res<crate::map::resources::Circle001Coords>,
 ) {
     for (interaction, mut color, mut border_color, children) in &mut interaction_query {
         let text = text_query.get_mut(children[0]).unwrap();
@@ -265,14 +263,6 @@ pub fn map_menu_system(
         };
         info!("({},{})", cursor_position.x, cursor_position.y);
     }
-    gizmos.circle_2d(
-        bevy::prelude::Vec2 {
-            x: circle_001_coords.x,
-            y: circle_001_coords.y,
-        },
-        10.,
-        Color::WHITE,
-    );
 }
 
 pub fn add_map(
@@ -281,6 +271,7 @@ pub fn add_map(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     state: Res<State<crate::MyAppState>>,
+    map_info: Res<crate::map::resources::MapInfo>,
 ) {
     info!("add_map");
     match state.get() {
@@ -295,10 +286,10 @@ pub fn add_map(
                         //     + "-"
                         //     + (y + 1).to_string().as_str()
                         //     + ".png",
-                        "wg/mlx/1-5040p-3600p.png",
+                        "wg/mlx/map/1-8819p-6299p.png",
                         // "branding/bevy_bird_dark.png",
                     ),
-
+                    transform: Transform::from_xyz(map_info.unit_x / 2., map_info.unit_y / 2., 0.),
                     ..default()
                 },
                 crate::map::entities::MapNC,
@@ -307,28 +298,28 @@ pub fn add_map(
             // }
             // }
 
-            commands.spawn((
-                SpriteBundle {
-                    texture: asset_server.load("wg/mlx/hexagon.png"),
-                    transform: Transform {
-                        translation: Vec3 {
-                            x: 0.,
-                            y: 0.,
-                            z: 1.,
-                        },
-                        scale: Vec3 {
-                            x: 0.42,
-                            y: 0.42,
-                            z: 0.,
-                        },
-                        ..default()
-                    },
-                    ..default()
-                },
-                crate::map::entities::MapHexagon,
-                crate::map::entities::MapNC,
-                crate::map::entities::MapMenu,
-            ));
+            // commands.spawn((
+            //     SpriteBundle {
+            //         texture: asset_server.load("wg/mlx/hexagon.png"),
+            //         transform: Transform {
+            //             translation: Vec3 {
+            //                 x: 0.,
+            //                 y: 0.,
+            //                 z: 1.,
+            //             },
+            //             scale: Vec3 {
+            //                 x: 0.42,
+            //                 y: 0.42,
+            //                 z: 0.,
+            //             },
+            //             ..default()
+            //         },
+            //         ..default()
+            //     },
+            //     crate::map::entities::MapHexagon,
+            //     crate::map::entities::MapNC,
+            //     crate::map::entities::MapMenu,
+            // ));
         }
 
         crate::MyAppState::Map3D => {
@@ -395,6 +386,20 @@ pub fn add_map(
     }
 }
 
+pub fn draw_hexagon_2d(
+    mut gizmos: Gizmos,
+    circle_001_coords: Res<crate::map::resources::Circle001Coords>,
+) {
+    gizmos.circle_2d(
+        bevy::prelude::Vec2 {
+            x: circle_001_coords.x,
+            y: circle_001_coords.y,
+        },
+        10.,
+        Color::WHITE,
+    );
+}
+
 pub fn map2d_scale_wander(
     mut query_camera_projection: Query<
         &mut OrthographicProjection,
@@ -435,27 +440,29 @@ pub fn map2d_scale_wander(
             }
         }
     }
+
     let mut transform = query_camera2d_transform.single_mut();
+
     if (keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp))
-        && transform.translation.y < map_info.unit_y * 0.55
+        && transform.translation.y < map_info.unit_y
     {
         transform.translation.y += 10.;
     }
 
     if (keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown))
-        && transform.translation.y > -map_info.unit_y * 0.55
+        && transform.translation.y > 0.
     {
         transform.translation.y -= 10.;
     }
 
     if (keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight))
-        && transform.translation.x < map_info.unit_x * 0.55
+        && transform.translation.x < map_info.unit_x
     {
         transform.translation.x += 10.;
     }
 
     if (keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft))
-        && transform.translation.x > -map_info.unit_x * 0.55
+        && transform.translation.x > 0.
     {
         transform.translation.x -= 10.;
     }
@@ -600,7 +607,43 @@ pub fn draw_line_collection(
     gizmos.arrow(Vec3::ZERO, Vec3::ONE * 1.5, Color::YELLOW);
 }
 
-pub fn add_oper() {}
+pub fn add_oper(
+    // time: Res<Time>
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    map_info: Res<crate::map::resources::MapInfo>,
+) {
+    commands.spawn((
+        SpriteBundle {
+            texture: asset_server.load(
+                // "wg/ncly/level21/".to_string()
+                //     + (x + 1).to_string().as_str()
+                //     + "-"
+                //     + (y + 1).to_string().as_str()
+                //     + ".png",
+                "wg/mlx/oper/001-01.png",
+                // "branding/bevy_bird_dark.png",
+            ),
+            // transform: Transform::from_xyz(, , 1.),
+            transform: Transform {
+                translation: bevy::prelude::Vec3 {
+                    x: map_info.unit_x / 4.,
+                    y: map_info.unit_y / 4.,
+                    z: 1.,
+                },
+                scale: bevy::prelude::Vec3 {
+                    x: 0.25,
+                    y: 0.25,
+                    z: 1.,
+                },
+                ..default()
+            },
+            ..default()
+        },
+        crate::map::entities::MapNC,
+        crate::map::entities::MapMenu,
+    ));
+}
 
 pub fn despawn_map_menu(
     query_enemy: Query<Entity, With<crate::map::entities::MapMenu>>,
