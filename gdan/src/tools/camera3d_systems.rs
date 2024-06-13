@@ -17,11 +17,9 @@ pub fn projection3d_zoom(
                 //     ev.y, ev.x
                 // );
                 if ev.y > 0. && persp.fov < 2. {
-                    persp.fov *= 1.1;
-                    info!("persp.fov {}", persp.fov);
-                } else if ev.y < 0. && persp.fov > 0.2 {
                     persp.fov /= 1.1;
-                    info!("persp.fov {}", persp.fov);
+                } else if ev.y < 0. && persp.fov > 0.2 {
+                    persp.fov *= 1.1;
                 }
             }
             bevy::input::mouse::MouseScrollUnit::Pixel => {
@@ -34,15 +32,34 @@ pub fn projection3d_zoom(
     }
 }
 
-pub fn transform_location(
+pub fn camera_location(
     mut query_camera3d_transform: Query<&mut Transform, With<Camera3d>>,
-    buttons: Res<ButtonInput<MouseButton>>,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    let mut transform = query_camera3d_transform.single_mut();
-    transform.rotate_around(Vec3::ZERO, Quat::from_rotation_z(time.delta_seconds() / 2.));
-    if buttons.just_pressed(MouseButton::Left) {
-        info!("just_pressed MouseButton Left");
-        transform.translation.x += 1.;
+    let mut camera_transform = query_camera3d_transform.single_mut();
+
+    if keyboard.pressed(KeyCode::KeyA) {
+        camera_transform.translation.x -= 1.;
+    }
+    if keyboard.pressed(KeyCode::KeyD) {
+        camera_transform.translation.x += 1.;
+    }
+    if keyboard.pressed(KeyCode::KeyW) {
+        camera_transform.translation.y += 1.;
+    }
+    if keyboard.pressed(KeyCode::KeyS) {
+        camera_transform.translation.y -= 1.;
+    }
+    if keyboard.pressed(KeyCode::KeyQ) {
+        camera_transform.translation.z += 1.;
+    }
+    if keyboard.pressed(KeyCode::KeyE) {
+        camera_transform.translation.z -= 1.;
+    }
+    if mouse_buttons.pressed(MouseButton::Right) {
+        camera_transform
+            .rotate_around(Vec3::ZERO, Quat::from_rotation_z(time.delta_seconds() / 2.));
     }
 }

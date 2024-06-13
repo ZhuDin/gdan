@@ -212,7 +212,7 @@ fn main() {
             (
                 back_main_menu,
                 crate::tools::camera3d_systems::projection3d_zoom,
-                crate::tools::camera3d_systems::transform_location,
+                crate::tools::camera3d_systems::camera_location,
             )
                 .chain()
                 .run_if(in_state(MyAppState::Scene3D)),
